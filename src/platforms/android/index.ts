@@ -19,6 +19,8 @@ import { warn } from '../../util/log';
 
 import * as AndroidAssetTemplates from './assets';
 
+type AdaptiveIconLayer = 'foreground' | 'background' | 'monochrome';
+
 export class AndroidAssetGenerator extends AssetGenerator {
   constructor(options: AssetGeneratorOptions = {}) {
     super(options);
@@ -42,9 +44,11 @@ export class AndroidAssetGenerator extends AssetGenerator {
       case AssetKind.Icon:
         return this.generateLegacyIcon(asset, project);
       case AssetKind.IconForeground:
-        return this.generateAdaptiveIconForeground(asset, project);
+        return this.generateAdaptiveIconLayer(asset, project, 'foreground');
       case AssetKind.IconBackground:
-        return this.generateAdaptiveIconBackground(asset, project);
+        return this.generateAdaptiveIconLayer(asset, project, 'background');
+      case AssetKind.IconMonochrome:
+        return this.generateAdaptiveIconLayer(asset, project, 'monochrome');
       case AssetKind.Splash:
       case AssetKind.SplashDark:
         return this.generateSplashes(asset, project);
@@ -119,8 +123,8 @@ export class AndroidAssetGenerator extends AssetGenerator {
     asset: InputAsset,
     pipe: Sharp,
   ): Promise<OutputAsset[]> {
-    // Current versions of Android don't appear to support night mode icons (13+ might?)
-    // so, for now, we only generate light mode ones
+    // Android has no night mode launcher icons. Themed icons (Android 13+) use the
+    // monochrome layer instead, see generateAdaptiveIconLayer.
     if (asset.kind === AssetKind.LogoDark) {
       return [];
     }
@@ -144,13 +148,13 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     const backgroundImages = await Promise.all(
       icons.map(async (icon) => {
-        return await this._generateAdaptiveIconBackground(project, asset, icon, backgroundPipe);
+        return await this._generateAdaptiveIconLayer(project, asset, icon, backgroundPipe, 'background');
       }),
     );
 
     const foregroundImages = await Promise.all(
       icons.map(async (icon) => {
-        return await this._generateAdaptiveIconForeground(project, asset, icon, pipe);
+        return await this._generateAdaptiveIconLayer(project, asset, icon, pipe, 'foreground');
       }),
     );
 
@@ -324,7 +328,11 @@ export class AndroidAssetGenerator extends AssetGenerator {
     return [destRound, outputInfo];
   }
 
-  private async generateAdaptiveIconForeground(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
+  private async generateAdaptiveIconLayer(
+    asset: InputAsset,
+    project: Project,
+    layer: AdaptiveIconLayer,
+  ): Promise<OutputAsset[]> {
     const icons = Object.values(AndroidAssetTemplates).filter(
       (a) => a.kind === AssetKind.AdaptiveIcon,
     ) as AndroidOutputAssetTemplateAdaptiveIcon[];
@@ -337,28 +345,47 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     return Promise.all(
       icons.map(async (icon) => {
-        return await this._generateAdaptiveIconForeground(project, asset, icon, pipe);
+        return await this._generateAdaptiveIconLayer(project, asset, icon, pipe, layer);
       }),
     );
   }
 
-  private async _generateAdaptiveIconForeground(
+  private async _generateAdaptiveIconLayer(
     project: Project,
     asset: InputAsset,
     icon: AndroidOutputAssetTemplateAdaptiveIcon,
     pipe: Sharp,
+    layer: AdaptiveIconLayer,
   ) {
     const resPath = this.getResPath(project);
 
-    // Create the foreground and background images
-    const destForeground = join(resPath, `mipmap-${icon.density}`, 'ic_launcher_foreground.png');
-    const parentDir = dirname(destForeground);
+    const relPath = `mipmap-${icon.density}/ic_launcher_${layer}.png`;
+    const dest = join(resPath, relPath);
+    const parentDir = dirname(dest);
     if (!(await pathExists(parentDir))) {
       await mkdirp(parentDir);
     }
-    const outputInfoForeground = await pipe.resize(icon.width, icon.height).png().toFile(destForeground);
 
-    // Create the adaptive icon XML
+    const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
+
+    const xmlFiles = await this.writeAdaptiveIconXml(project);
+
+    return new OutputAsset(icon, asset, project, { [relPath]: dest, ...xmlFiles }, { [relPath]: outputInfo });
+  }
+
+  /**
+   * Writes ic_launcher.xml and ic_launcher_round.xml. The monochrome layer is only
+   * referenced when a monochrome source asset exists, because Android fails to
+   * build when a referenced drawable is missing.
+   */
+  private async writeAdaptiveIconXml(project: Project): Promise<{ [relPath: string]: string }> {
+    const monochrome = project.assets?.iconMonochrome
+      ? `
+    <monochrome>
+        <inset android:drawable="@mipmap/ic_launcher_monochrome" android:inset="16.7%" />
+    </monochrome>`
+      : '';
+
     const icLauncherXml = `
 <?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -367,11 +394,11 @@ export class AndroidAssetGenerator extends AssetGenerator {
     </background>
     <foreground>
         <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
-    </foreground>
+    </foreground>${monochrome}
 </adaptive-icon>
     `.trim();
 
-    const mipmapAnyPath = join(resPath, `mipmap-anydpi-v26`);
+    const mipmapAnyPath = join(this.getResPath(project), `mipmap-anydpi-v26`);
     if (!(await pathExists(mipmapAnyPath))) {
       await mkdirp(mipmapAnyPath);
     }
@@ -380,91 +407,10 @@ export class AndroidAssetGenerator extends AssetGenerator {
     await writeFile(destIcLauncher, icLauncherXml);
     await writeFile(destIcLauncherRound, icLauncherXml);
 
-    // Return the created files for this OutputAsset
-    return new OutputAsset(
-      icon,
-      asset,
-      project,
-      {
-        [`mipmap-${icon.density}/ic_launcher_foreground.png`]: destForeground,
-        'mipmap-anydpi-v26/ic_launcher.xml': destIcLauncher,
-        'mipmap-anydpi-v26/ic_launcher_round.xml': destIcLauncherRound,
-      },
-      {
-        [`mipmap-${icon.density}/ic_launcher_foreground.png`]: outputInfoForeground,
-      },
-    );
-  }
-
-  private async generateAdaptiveIconBackground(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
-    const icons = Object.values(AndroidAssetTemplates).filter(
-      (a) => a.kind === AssetKind.AdaptiveIcon,
-    ) as AndroidOutputAssetTemplateAdaptiveIcon[];
-
-    const pipe = asset.pipeline();
-
-    if (!pipe) {
-      throw new BadPipelineError('Sharp instance not created');
-    }
-
-    return Promise.all(
-      icons.map(async (icon) => {
-        return await this._generateAdaptiveIconBackground(project, asset, icon, pipe);
-      }),
-    );
-  }
-  private async _generateAdaptiveIconBackground(
-    project: Project,
-    asset: InputAsset,
-    icon: AndroidOutputAssetTemplateAdaptiveIcon,
-    pipe: Sharp,
-  ) {
-    const resPath = this.getResPath(project);
-
-    const destBackground = join(resPath, `mipmap-${icon.density}`, 'ic_launcher_background.png');
-    const parentDir = dirname(destBackground);
-    if (!(await pathExists(parentDir))) {
-      await mkdirp(parentDir);
-    }
-
-    const outputInfoBackground = await pipe.resize(icon.width, icon.height).png().toFile(destBackground);
-
-    // Create the adaptive icon XML
-    const icLauncherXml = `
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background>
-        <inset android:drawable="@mipmap/ic_launcher_background" android:inset="16.7%" />
-    </background>
-    <foreground>
-        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
-    </foreground>
-</adaptive-icon>
-    `.trim();
-
-    const mipmapAnyPath = join(resPath, `mipmap-anydpi-v26`);
-    if (!(await pathExists(mipmapAnyPath))) {
-      await mkdirp(mipmapAnyPath);
-    }
-    const destIcLauncher = join(mipmapAnyPath, `ic_launcher.xml`);
-    const destIcLauncherRound = join(mipmapAnyPath, `ic_launcher_round.xml`);
-    await writeFile(destIcLauncher, icLauncherXml);
-    await writeFile(destIcLauncherRound, icLauncherXml);
-
-    // Return the created files for this OutputAsset
-    return new OutputAsset(
-      icon,
-      asset,
-      project,
-      {
-        [`mipmap-${icon.density}/ic_launcher_background.png`]: destBackground,
-        'mipmap-anydpi-v26/ic_launcher.xml': destIcLauncher,
-        'mipmap-anydpi-v26/ic_launcher_round.xml': destIcLauncherRound,
-      },
-      {
-        [`mipmap-${icon.density}/ic_launcher_background.png`]: outputInfoBackground,
-      },
-    );
+    return {
+      'mipmap-anydpi-v26/ic_launcher.xml': destIcLauncher,
+      'mipmap-anydpi-v26/ic_launcher_round.xml': destIcLauncherRound,
+    };
   }
 
   private async updateManifest(project: Project) {
