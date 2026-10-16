@@ -1,16 +1,44 @@
-import type { IosOutputAssetTemplate, IosOutputAssetTemplateSplash } from '../../definitions';
-import { AssetKind, Format, IosIdiom, Orientation, Platform, Theme } from '../../definitions';
+import type { IosOutputAssetTemplateIcon, IosOutputAssetTemplateSplash } from '../../definitions';
+import { AssetKind, Format, IosIconAppearance, IosIdiom, Orientation, Platform, Theme } from '../../definitions';
 
 /**
  * 1024px Icon
  *
  * - iOS 1024 icon
  */
-export const IOS_1024_ICON: IosOutputAssetTemplate = {
+export const IOS_1024_ICON: IosOutputAssetTemplateIcon = {
   platform: Platform.Ios,
   idiom: IosIdiom.Universal,
   kind: AssetKind.Icon,
   name: 'AppIcon-512@2x.png',
+  format: Format.Png,
+  width: 1024,
+  height: 1024,
+};
+
+/**
+ * 1024px Icon for the dark appearance (iOS 18+)
+ */
+export const IOS_1024_ICON_DARK: IosOutputAssetTemplateIcon = {
+  platform: Platform.Ios,
+  idiom: IosIdiom.Universal,
+  kind: AssetKind.IconDark,
+  appearance: IosIconAppearance.Dark,
+  name: 'AppIcon-512@2x-dark.png',
+  format: Format.Png,
+  width: 1024,
+  height: 1024,
+};
+
+/**
+ * 1024px Icon for the tinted appearance (iOS 18+)
+ */
+export const IOS_1024_ICON_TINTED: IosOutputAssetTemplateIcon = {
+  platform: Platform.Ios,
+  idiom: IosIdiom.Universal,
+  kind: AssetKind.IconTinted,
+  appearance: IosIconAppearance.Tinted,
+  name: 'AppIcon-512@2x-tinted.png',
   format: Format.Png,
   width: 1024,
   height: 1024,

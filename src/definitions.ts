@@ -10,6 +10,8 @@ export interface Assets {
   splashDark: InputAsset | null;
 
   iosIcon?: InputAsset | null;
+  iosIconDark?: InputAsset | null;
+  iosIconTinted?: InputAsset | null;
   iosSplash?: InputAsset | null;
   iosSplashDark?: InputAsset | null;
 
@@ -31,6 +33,8 @@ export const enum AssetKind {
   LogoDark = 'logo-dark',
   AdaptiveIcon = 'adaptive-icon',
   Icon = 'icon',
+  IconDark = 'icon-dark',
+  IconTinted = 'icon-tinted',
   IconForeground = 'icon-foreground',
   IconBackground = 'icon-background',
   NotificationIcon = 'notification-icon',
@@ -130,7 +134,15 @@ export const enum IosIdiom {
   TV = 'tv',
 }
 
-export type IosOutputAssetTemplateIcon = IosOutputAssetTemplate;
+// App icon appearances introduced with iOS 18 (Xcode 16)
+export const enum IosIconAppearance {
+  Dark = 'dark',
+  Tinted = 'tinted',
+}
+
+export interface IosOutputAssetTemplateIcon extends IosOutputAssetTemplate {
+  appearance?: IosIconAppearance;
+}
 export interface IosOutputAssetTemplateSplash extends IosOutputAssetTemplate {
   orientation: Orientation;
   theme: Theme;
@@ -159,6 +171,11 @@ export interface IosContents {
     size: string;
     scale: string;
     idiom: string;
+    platform?: string;
+    appearances?: {
+      appearance: string;
+      value: string;
+    }[];
   }[];
   info?: {
     version: number;

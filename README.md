@@ -63,12 +63,16 @@ assets/
 ├── icon-foreground.png
 ├── icon-background.png
 ├── splash.png
-└── splash-dark.png
+├── splash-dark.png
+└── ios/
+    ├── icon-dark.png
+    └── icon-tinted.png
 ```
 
 - `assets/icon-only.(png|jpg)` must be at least 1024×1024px
 - `assets/icon-(foreground|background).(png|jpg)` must be at least 1024×1024px
 - `assets/splash[-dark].(png|jpg)` must be at least 2732×2732px
+- `assets/ios/icon-(dark|tinted).(png|jpg)` are optional and must be at least 1024×1024px. They are used for the dark and tinted app icon appearances on iOS 18 and later. The dark icon should have a transparent background, the tinted icon should be a grayscale image (see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)).
 
 To generate resources with all the default options, just run:
 

@@ -4,7 +4,7 @@ import sharp from 'sharp';
 
 import type { AssetGeneratorOptions } from '../../asset-generator';
 import { AssetGenerator } from '../../asset-generator';
-import type { IosOutputAssetTemplate } from '../../definitions';
+import type { IosIconAppearance, IosOutputAssetTemplate, IosOutputAssetTemplateIcon } from '../../definitions';
 import { AssetKind, Platform } from '../../definitions';
 import { BadPipelineError, BadProjectError } from '../../error';
 import type { InputAsset } from '../../input-asset';
@@ -47,6 +47,8 @@ export class IosAssetGenerator extends AssetGenerator {
       case AssetKind.LogoDark:
         return this.generateFromLogo(asset, project);
       case AssetKind.Icon:
+      case AssetKind.IconDark:
+      case AssetKind.IconTinted:
         return this.generateIcons(asset, project);
       case AssetKind.Splash:
       case AssetKind.SplashDark:
@@ -171,8 +173,8 @@ export class IosAssetGenerator extends AssetGenerator {
   private async _generateIcons(
     asset: InputAsset,
     project: Project,
-    icons: IosOutputAssetTemplate[],
-  ): Promise<OutputAsset[]> {
+    icons: IosOutputAssetTemplateIcon[],
+  ): Promise<OutputAsset<IosOutputAssetTemplateIcon>[]> {
     const pipe = asset.pipeline();
 
     if (!pipe) {
@@ -185,11 +187,13 @@ export class IosAssetGenerator extends AssetGenerator {
       icons.map(async (icon) => {
         const dest = join(iosDir, IOS_APP_ICON_SET_PATH, icon.name);
 
-        const outputInfo = await pipe
-          .resize(icon.width, icon.height)
-          .png()
-          .flatten({ background: this.options.iconBackgroundColor ?? lightDefaultBackground })
-          .toFile(dest);
+        const resized = pipe.resize(icon.width, icon.height).png();
+        // The default icon must be opaque, the dark and tinted icons rely on transparency
+        const outputInfo = icon.appearance
+          ? await resized.toFile(dest)
+          : await resized
+              .flatten({ background: this.options.iconBackgroundColor ?? lightDefaultBackground })
+              .toFile(dest);
 
         return new OutputAsset(
           icon,
@@ -218,9 +222,9 @@ export class IosAssetGenerator extends AssetGenerator {
   }
 
   private async generateIcons(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
-    const icons = Object.values(IosAssetTemplates).filter((a) => [AssetKind.Icon].find((i) => i === a.kind));
+    const icons = Object.values(IosAssetTemplates).filter((a) => a.kind === asset.kind);
 
-    return this._generateIcons(asset, project, icons as IosOutputAssetTemplate[]);
+    return this._generateIcons(asset, project, icons as IosOutputAssetTemplateIcon[]);
   }
 
   private async generateSplashes(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
@@ -272,33 +276,34 @@ export class IosAssetGenerator extends AssetGenerator {
     return generated;
   }
 
-  private async updateIconsContentsJson(generated: OutputAsset[], project: Project) {
+  private async updateIconsContentsJson(generated: OutputAsset<IosOutputAssetTemplateIcon>[], project: Project) {
     const assetsPath = join(project.config.ios!.path!, IOS_APP_ICON_SET_PATH);
     const contentsJsonPath = join(assetsPath, 'Contents.json');
     const json = await readFile(contentsJsonPath, { encoding: 'utf-8' });
 
     const parsed = JSON.parse(json);
 
-    const withoutMissing = [];
     for (const g of generated) {
-      const width = g.template.width;
-      const height = g.template.height;
+      const { name, width, height, idiom, appearance } = g.template;
+      const hasSameAppearance = (i: any) => iconAppearance(i) === appearance;
 
-      parsed.images.map((i: any) => {
-        if (i.filename !== (g.template as IosOutputAssetTemplate).name) {
-          rmSync(join(assetsPath, i.filename));
+      // Each appearance has a single icon, so drop the previous icons of this appearance
+      for (const image of parsed.images.filter(hasSameAppearance)) {
+        if (image.filename !== name) {
+          rmSync(join(assetsPath, image.filename), { force: true });
         }
-      });
+      }
 
-      withoutMissing.push({
-        idiom: (g.template as IosOutputAssetTemplate).idiom,
+      const index = parsed.images.findIndex(hasSameAppearance);
+      parsed.images = parsed.images.filter((i: any) => !hasSameAppearance(i));
+      parsed.images.splice(index < 0 ? parsed.images.length : index, 0, {
+        ...(appearance && { appearances: [{ appearance: 'luminosity', value: appearance }] }),
+        idiom,
         size: `${width}x${height}`,
-        filename: (g.template as IosOutputAssetTemplate).name,
+        filename: name,
         platform: Platform.Ios,
       });
     }
-
-    parsed.images = withoutMissing;
 
     await writeFile(contentsJsonPath, JSON.stringify(parsed, null, 2));
   }
@@ -368,4 +373,8 @@ export class IosAssetGenerator extends AssetGenerator {
 
     await writeFile(contentsJsonPath, JSON.stringify(parsed, null, 2));
   }
+}
+
+function iconAppearance(image: any): IosIconAppearance | undefined {
+  return image.appearances?.find((a: any) => a.appearance === 'luminosity')?.value;
 }
