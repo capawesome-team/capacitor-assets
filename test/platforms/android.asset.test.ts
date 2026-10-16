@@ -133,7 +133,7 @@ describe('Android asset test', () => {
     expect(generatedAssets.length).toBe(5);
 
     for (const asset of generatedAssets) {
-      const dest = asset.getDestFilename(`drawable-${asset.template.density}/ic_notification.png`);
+      const dest = asset.getDestFilename(join(`drawable-${asset.template.density}`, 'ic_notification.png'));
       expect(await pathExists(dest)).toBe(true);
       expect((await sharp(dest).metadata()).hasAlpha).toBe(true);
     }
