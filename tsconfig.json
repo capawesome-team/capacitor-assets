@@ -10,9 +10,10 @@
     "noUnusedLocals": false,
     "outDir": "./dist",
     "pretty": true,
+    "skipLibCheck": true,
     "strict": true,
-    "target": "es2019",
-    "lib": ["dom", "es2019"],
+    "target": "es2022",
+    "lib": ["dom", "es2022"],
     "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts"],

@@ -1,13 +1,17 @@
-# Capacitor Assets
+# @capawesome/capacitor-assets
+
+[![npm version](https://img.shields.io/npm/v/@capawesome/capacitor-assets)](https://www.npmjs.com/package/@capawesome/capacitor-assets)
+[![npm downloads](https://img.shields.io/npm/dm/@capawesome/capacitor-assets)](https://www.npmjs.com/package/@capawesome/capacitor-assets)
+[![license](https://img.shields.io/npm/l/@capawesome/capacitor-assets)](https://github.com/capawesome-team/capacitor-assets/blob/main/LICENSE)
 
 This tool will crop and resize JPEG and PNG source images to generate icons and splash screens for iOS, Android, and Progressive Web Apps using [Capacitor](https://capacitorjs.com/).
 
-Note: previous versions of this tool supported Cordova but Cordova support has been removed as of `1.x`. We strongly recommend teams [migrate to Capacitor](https://capacitorjs.com/docs/cordova/migrating-from-cordova-to-capacitor).
+This is the maintained fork of [@capacitor/assets](https://github.com/ionic-team/capacitor-assets) by [Capawesome](https://capawesome.io/). It is a drop-in replacement: only the package name changed.
 
 ## Install
 
 ```shell
-npm install --save-dev @capacitor/assets
+npm install --save-dev @capawesome/capacitor-assets
 ```
 
 ## Usage
@@ -20,7 +24,7 @@ There are two modes this tool can be used in: Easy Mode, and Full Control mode.
 
 With Easy Mode, the tool supports generating all the icon and splash assets you need for iOS, Android, and PWA from a single logo file along with an optional dark mode logo, and background colors. This is the easiest way to generate all your assets, but it trades customizability for convenience.
 
-To use this mode, create a single `logo.png` or `icon.png` with an optional `logo-dark.png` in `assets/` (the tool also supports using SVG files as source images, substitue `.svg` as needed):
+To use this mode, create a single `logo.png` or `icon.png` with an optional `logo-dark.png` in `assets/` (the tool also supports using SVG files as source images, substitute `.svg` as needed):
 
 ```
 assets/
@@ -31,7 +35,7 @@ assets/
 Then, generate the assets and provide the background colors that will be used to generate background layers for icons:
 
 ```shell
-npx @capacitor/assets generate --iconBackgroundColor '#eeeeee' --iconBackgroundColorDark '#222222' --splashBackgroundColor '#eeeeee' --splashBackgroundColorDark '#111111'
+npx @capawesome/capacitor-assets generate --iconBackgroundColor '#eeeeee' --iconBackgroundColorDark '#222222' --splashBackgroundColor '#eeeeee' --splashBackgroundColorDark '#111111'
 ```
 
 Where the provided flags are:
@@ -69,16 +73,16 @@ assets/
 To generate resources with all the default options, just run:
 
 ```shell
-npx @capacitor/assets generate
+npx @capawesome/capacitor-assets generate
 ```
 
-`@capacitor/assets` accepts a platform for the first argument (`ios`, `android`, or `pwa` currently). If specified, resources are generated only for that platform:
+`@capawesome/capacitor-assets` accepts a platform for the first argument (`ios`, `android`, or `pwa` currently). If specified, resources are generated only for that platform:
 
 ```shell
-npx @capacitor/assets generate --ios
+npx @capawesome/capacitor-assets generate --ios
 ```
 
-Otherwise `@capacitor/assets` will use all detected Capacitor platforms.
+Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platforms.
 
 ## PWA Notes
 
@@ -93,5 +97,5 @@ By default, the tool will look for the manifest file in `public`, `src`, and `ww
 See the help instructions on the command line with the `--help` flag.
 
 ```shell
-npx @capacitor/assets generate --help
+npx @capawesome/capacitor-assets generate --help
 ```

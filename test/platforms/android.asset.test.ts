@@ -1,5 +1,6 @@
 import { copy, pathExists, readdirp, readFile, rmSync as rm, statSync } from '@ionic/utils-fs';
-import tempy from 'tempy';
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
 import sharp from 'sharp';
 import { join } from 'path';
 
@@ -17,7 +18,7 @@ import * as AndroidAssets from '../../src/platforms/android/assets';
 describe('Android asset test', () => {
   let ctx: Context;
   let assets: Assets;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app', fixtureDir);
@@ -120,7 +121,7 @@ describe('Android asset test', () => {
 describe('Android Asset Test - Logo Only', () => {
   let ctx: Context;
   let assets: Assets;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app-logo-only', fixtureDir);

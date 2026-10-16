@@ -1,4 +1,4 @@
-# @capacitor/assets
+# @capawesome/capacitor-assets
 
 ## 3.0.4
 

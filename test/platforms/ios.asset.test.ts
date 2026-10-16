@@ -1,5 +1,6 @@
 import { copy, pathExists, readFile, rmSync as rm } from '@ionic/utils-fs';
-import tempy from 'tempy';
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
 
 import { Context, loadContext } from '../../src/ctx';
 import { IosAssetGenerator, IOS_SPLASH_IMAGE_SET_PATH } from '../../src/platforms/ios';
@@ -12,7 +13,7 @@ import { OutputAsset } from '../../src/output-asset';
 describe('iOS Asset Test', () => {
   let ctx: Context;
   let assets: Assets;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app', fixtureDir);
@@ -93,7 +94,7 @@ describe('iOS Asset Test', () => {
 describe('iOS Asset Test - Logo Only', () => {
   let ctx: Context;
   let assets: Assets;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app-logo-only', fixtureDir);

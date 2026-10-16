@@ -2,7 +2,7 @@
 
 'use strict';
 
-process.title = 'capacitor-res';
+process.title = 'capacitor-assets';
 
 if (process.argv.includes('--verbose')) {
   process.env.DEBUG = '*';
