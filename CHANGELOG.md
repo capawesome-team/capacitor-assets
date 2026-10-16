@@ -1,5 +1,22 @@
 # @capawesome/capacitor-assets
 
+## [4.0.0](https://github.com/capawesome-team/capacitor-assets/compare/v3.0.5...v4.0.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* rebrand to @capawesome/capacitor-assets and modernize tooling ([#1](https://github.com/capawesome-team/capacitor-assets/issues/1))
+
+### Features
+
+* allow functions accessed by cli tool to be used in library ([#619](https://github.com/capawesome-team/capacitor-assets/issues/619)) ([5555191](https://github.com/capawesome-team/capacitor-assets/commit/5555191dcb08e8ef0b84458e5c0e9507f5ad47ab))
+* rebrand to @capawesome/capacitor-assets and modernize tooling ([#1](https://github.com/capawesome-team/capacitor-assets/issues/1)) ([7a0f5bf](https://github.com/capawesome-team/capacitor-assets/commit/7a0f5bf17ae923c344a95b9b19855fdf484688d9))
+
+
+### Bug Fixes
+
+* **generate.ts:** wrong error message ([#601](https://github.com/capawesome-team/capacitor-assets/issues/601)) ([b60ec8d](https://github.com/capawesome-team/capacitor-assets/commit/b60ec8dc09a4682c2b65e3d26838436e047fc30a))
+
 ## 3.0.4
 
 ### Patch Changes
