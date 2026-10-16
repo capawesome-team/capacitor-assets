@@ -18,7 +18,7 @@ export interface Context {
 export async function loadContext(projectRootPath?: string): Promise<Context> {
   const rootDir = process.cwd();
 
-  const argv = await yargs(hideBin(process.argv)).argv;
+  const argv = await yargs(hideBin(process.argv)).help(false).argv;
 
   let project: Project;
   try {
