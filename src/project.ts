@@ -60,6 +60,8 @@ export class Project extends MobileProject {
       splashDark: await this.loadInputAsset('splash-dark', AssetKind.SplashDark, Platform.Any),
 
       iosIcon: await this.loadInputAsset('ios/icon', AssetKind.Icon, Platform.Ios),
+      iosIconDark: await this.loadInputAsset('ios/icon-dark', AssetKind.IconDark, Platform.Ios),
+      iosIconTinted: await this.loadInputAsset('ios/icon-tinted', AssetKind.IconTinted, Platform.Ios),
       iosSplash: await this.loadInputAsset('ios/splash', AssetKind.Splash, Platform.Ios),
       iosSplashDark: await this.loadInputAsset('ios/splash-dark', AssetKind.SplashDark, Platform.Ios),
 

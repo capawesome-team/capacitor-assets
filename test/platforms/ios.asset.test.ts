@@ -3,7 +3,7 @@ import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 
 import { Context, loadContext } from '../../src/ctx';
-import { IosAssetGenerator, IOS_SPLASH_IMAGE_SET_PATH } from '../../src/platforms/ios';
+import { IosAssetGenerator, IOS_APP_ICON_SET_PATH, IOS_SPLASH_IMAGE_SET_PATH } from '../../src/platforms/ios';
 import { AssetKind, Assets, Format, IosContents, IosOutputAssetTemplate } from '../../src/definitions';
 import * as IosAssets from '../../src/platforms/ios/assets';
 import sharp from 'sharp';
@@ -88,6 +88,45 @@ describe('iOS Asset Test', () => {
 
     await verifyExists(generatedAssets);
     await verifySizes(generatedAssets);
+  });
+
+  it('Should generate ios dark and tinted icons', async () => {
+    const strategy = new IosAssetGenerator();
+    const generatedAssets = [
+      ...((await assets.iosIcon?.generate(strategy, ctx.project)) ?? []),
+      ...((await assets.iosIconDark?.generate(strategy, ctx.project)) ?? []),
+      ...((await assets.iosIconTinted?.generate(strategy, ctx.project)) ?? []),
+    ] as OutputAsset<IosOutputAssetTemplate>[];
+    expect(generatedAssets.length).toBe(3);
+
+    await verifyExists(generatedAssets);
+    await verifySizes(generatedAssets);
+
+    const darkIcon = await sharp(generatedAssets[1].destFilenames[IosAssets.IOS_1024_ICON_DARK.name]).metadata();
+    expect(darkIcon.hasAlpha).toBe(true);
+
+    const contentsJson = JSON.parse(
+      await readFile(join(ctx.project.config.ios!.path!, IOS_APP_ICON_SET_PATH, 'Contents.json'), {
+        encoding: 'utf-8',
+      }),
+    ) as IosContents;
+    expect(contentsJson.images).toEqual([
+      { idiom: 'universal', size: '1024x1024', filename: IosAssets.IOS_1024_ICON.name, platform: 'ios' },
+      {
+        appearances: [{ appearance: 'luminosity', value: 'dark' }],
+        idiom: 'universal',
+        size: '1024x1024',
+        filename: IosAssets.IOS_1024_ICON_DARK.name,
+        platform: 'ios',
+      },
+      {
+        appearances: [{ appearance: 'luminosity', value: 'tinted' }],
+        idiom: 'universal',
+        size: '1024x1024',
+        filename: IosAssets.IOS_1024_ICON_TINTED.name,
+        platform: 'ios',
+      },
+    ]);
   });
 });
 
