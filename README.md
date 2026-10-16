@@ -106,6 +106,8 @@ To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/ap
 
 To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
 
+To use it with [OneSignal](https://documentation.onesignal.com/docs/customize-notification-icons), no manifest entry or plugin option points to the icon. OneSignal looks for a drawable named `ic_stat_onesignal_default`, so rename the generated `res/drawable-<density>/ic_notification.png` files to `ic_stat_onesignal_default.png` after each run.
+
 ## PWA Notes
 
 ### Manifest
