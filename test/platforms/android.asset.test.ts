@@ -111,6 +111,22 @@ describe('Android asset test', () => {
     await verifySizes(generatedAssets);
   });
 
+  it('Should generate android adaptive icon monochrome layer', async () => {
+    const strategy = new AndroidAssetGenerator();
+    const generatedAssets = ((await assets.iconMonochrome?.generate(strategy, ctx.project)) ??
+      []) as OutputAsset<AndroidOutputAssetTemplateAdaptiveIcon>[];
+
+    expect(generatedAssets.length).toBe(6);
+    await verifySizes(generatedAssets);
+
+    const icLauncherXml = await readFile(
+      join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
+      { encoding: 'utf-8' },
+    );
+    expect(icLauncherXml).toContain('<monochrome>');
+    expect(icLauncherXml).toContain('@mipmap/ic_launcher_monochrome');
+  });
+
   it('Should generate android splashes', async () => {
     const assets = await ctx.project.loadInputAssets();
 
@@ -202,6 +218,12 @@ describe('Android Asset Test - Logo Only', () => {
 
     expect(generatedAssets.length).toBe(50);
     await verifySizes(generatedAssets);
+
+    const icLauncherXml = await readFile(
+      join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
+      { encoding: 'utf-8' },
+    );
+    expect(icLauncherXml).not.toContain('<monochrome>');
   });
 
   it('Should generate icons and splashes from logo-dark', async () => {
