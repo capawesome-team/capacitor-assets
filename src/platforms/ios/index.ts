@@ -286,16 +286,19 @@ export class IosAssetGenerator extends AssetGenerator {
     for (const g of generated) {
       const { name, width, height, idiom, appearance } = g.template;
       const hasSameAppearance = (i: any) => iconAppearance(i) === appearance;
+      const retained = parsed.images.filter((i: any) => !hasSameAppearance(i));
 
-      // Each appearance has a single icon, so drop the previous icons of this appearance
+      // Each appearance has a single icon, so drop the previous icons of this appearance.
+      // Slots created by Xcode have no filename yet, and a file may be shared with another appearance.
       for (const image of parsed.images.filter(hasSameAppearance)) {
-        if (image.filename !== name) {
+        const isStillReferenced = retained.some((i: any) => i.filename === image.filename);
+        if (image.filename && image.filename !== name && !isStillReferenced) {
           rmSync(join(assetsPath, image.filename), { force: true });
         }
       }
 
       const index = parsed.images.findIndex(hasSameAppearance);
-      parsed.images = parsed.images.filter((i: any) => !hasSameAppearance(i));
+      parsed.images = retained;
       parsed.images.splice(index < 0 ? parsed.images.length : index, 0, {
         ...(appearance && { appearances: [{ appearance: 'luminosity', value: appearance }] }),
         idiom,
