@@ -1,6 +1,6 @@
 {
   "name": "@capawesome/capacitor-assets",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Generate icon and splash screen images for Capacitor apps",
   "homepage": "https://capawesome.io/",
   "author": "Robin Genz <mail@robingenz.dev>",
