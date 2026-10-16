@@ -78,17 +78,19 @@ describe('PWA Asset Test', () => {
     ).toBe(true);
   });
 
-  it.skip('Should generate PWA splashes', async () => {
+  it('Should generate PWA splashes', async () => {
     const assets = await ctx.project.loadInputAssets();
 
     const strategy = new PwaAssetGenerator();
-    let generatedAssets = ((await assets.splash?.generate(strategy, ctx.project)) ??
+    const generatedAssets = ((await assets.splash?.generate(strategy, ctx.project)) ??
       []) as OutputAsset<PwaOutputAssetTemplate>[];
 
-    expect(generatedAssets.length).toBeGreaterThan(10);
+    expect(generatedAssets.length).toBe(PWA_IOS_DEVICE_SIZES.length);
 
-    generatedAssets = ((await assets.splashDark?.generate(strategy, ctx.project)) ??
+    const generatedDarkAssets = ((await assets.splashDark?.generate(strategy, ctx.project)) ??
       []) as OutputAsset<PwaOutputAssetTemplate>[];
+
+    expect(generatedDarkAssets.length).toBe(PWA_IOS_DEVICE_SIZES.length);
   });
 });
 
@@ -135,7 +137,8 @@ describe('PWA Asset Test - logo only', () => {
     const manifest = await readJSON(manifestPath);
     expect(manifest['background_color']).toBe('#dedbef');
 
-    expect(generated.length).toBe(7);
+    // Icons plus a light and a dark splash per device size
+    expect(generated.length).toBe(exportedIcons.length + PWA_IOS_DEVICE_SIZES.length * 2);
     await verifySizes(generated as OutputAsset<PwaOutputAssetTemplate>[]);
   });
 });
