@@ -1,5 +1,21 @@
 # @capawesome/capacitor-assets
 
+## [4.1.0](https://github.com/capawesome-team/capacitor-assets/compare/v4.0.0...v4.1.0) (2026-10-16)
+
+
+### Features
+
+* **android:** generate notification icons ([#5](https://github.com/capawesome-team/capacitor-assets/issues/5)) ([f4624a4](https://github.com/capawesome-team/capacitor-assets/commit/f4624a438c25efb81a054f14ac8a05e6cc6150a5))
+* **android:** support themed (monochrome) app icons ([#7](https://github.com/capawesome-team/capacitor-assets/issues/7)) ([ad17452](https://github.com/capawesome-team/capacitor-assets/commit/ad1745236d3c43b61955f7df7c1f74b85397bcdd))
+* **ios:** support dark and tinted app icons ([#6](https://github.com/capawesome-team/capacitor-assets/issues/6)) ([52a9625](https://github.com/capawesome-team/capacitor-assets/commit/52a962553dd25b4969bceb91209336de5eb6c157))
+
+
+### Bug Fixes
+
+* **android:** generate adaptive icon layers at adaptive icon sizes ([#4](https://github.com/capawesome-team/capacitor-assets/issues/4)) ([884ccca](https://github.com/capawesome-team/capacitor-assets/commit/884cccab0f1d9aa4abdb48de72588e83baaa30f1))
+* **pwa:** stop fetching iOS splash sizes from Apple and refresh the built-in list ([#8](https://github.com/capawesome-team/capacitor-assets/issues/8)) ([d5ca82f](https://github.com/capawesome-team/capacitor-assets/commit/d5ca82f3f3daeca9b59bb59ff819976501dfbc14))
+* show the real option list for --help ([#3](https://github.com/capawesome-team/capacitor-assets/issues/3)) ([aec12a1](https://github.com/capawesome-team/capacitor-assets/commit/aec12a1a675e8719ba97c5f4db3b07ae640aed92))
+
 ## [4.0.0](https://github.com/capawesome-team/capacitor-assets/compare/v3.0.5...v4.0.0) (2026-10-16)
 
 
