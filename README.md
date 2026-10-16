@@ -52,6 +52,7 @@ Where the provided flags are:
 - `--ios` - explicitly run iOS asset generation. Using a platform flag makes the platform list exclusive.
 - `--android` - explicitly run Android asset generation. Using a platform flag makes the platform list exclusive.
 - `--pwa` - explicitly run PWA asset generation. Using a platform flag makes the platform list exclusive.
+- `--pwaNoAppleFetch` - deprecated and has no effect. Apple device screen sizes are always taken from a built-in list (see [Splash screens](#splash-screens)).
 
 ### Usage - Custom Mode
 
@@ -91,6 +92,10 @@ Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platfor
 This tool will create and/or update the web app manifest used in your project, and supports both the older `manifest.json` file and the newer `manifest.webmanifest` files, preferring `manifest.webmanifest` when no existing manifest is found.
 
 By default, the tool will look for the manifest file in `public`, `src`, and `www` in that order. Use the flag `--pwaManifestPath` to specify the exact path to your web app manifest.
+
+### Splash screens
+
+iOS splash screens (`apple-touch-startup-image`) are generated for a built-in list of iPhone and iPad screen sizes. The list is based on the device screen dimensions table of the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and is updated with new releases of this tool. Earlier versions fetched the sizes from the Apple website at runtime; this no longer works because Apple removed the table, so the fetch and the `--pwaNoAppleFetch` flag have no effect anymore.
 
 ### Help
 

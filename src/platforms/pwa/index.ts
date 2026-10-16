@@ -1,5 +1,4 @@
 import { mkdirp, pathExists, readFile, readJSON, rmSync, writeJSON } from '@ionic/utils-fs';
-import parse from 'node-html-parser';
 import { basename, extname, join, posix, relative, sep } from 'path';
 import type { Sharp } from 'sharp';
 import sharp from 'sharp';
@@ -40,41 +39,6 @@ export class PwaAssetGenerator extends AssetGenerator {
     return JSON.parse(contents);
   }
 
-  async getSplashSizes(): Promise<string[]> {
-    const appleInterfacePage = `https://developer.apple.com/design/human-interface-guidelines/foundations/layout/`;
-
-    let assetSizes = PWA_IOS_DEVICE_SIZES;
-    if (!this.options.pwaNoAppleFetch) {
-      try {
-        const res = await fetch(appleInterfacePage);
-
-        const html = await res.text();
-
-        const doc = parse(html);
-
-        const target = doc.querySelector('main > section .row > .column table');
-        const sizes = target?.querySelectorAll('tr > td:nth-child(2)') ?? [];
-        const sizeStrings = sizes.map((td) => {
-          const t = td.innerText;
-          return t
-            .slice(t.indexOf('pt (') + 4)
-            .slice(0, -1)
-            .replace(' px ', '');
-        });
-
-        const deduped = new Set(sizeStrings);
-
-        assetSizes = Array.from(deduped);
-      } catch {
-        warn(
-          `Unable to load iOS HIG screen sizes to generate iOS PWA splash screens. Using local snapshot of device sizes. Use --pwaNoAppleFetch true to always use local sizes`,
-        );
-      }
-    }
-
-    return assetSizes;
-  }
-
   async generate(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
     const pwaDir = project.directory;
 
@@ -113,11 +77,11 @@ export class PwaAssetGenerator extends AssetGenerator {
     // Generate logos
     const logos = await this.generateIcons(asset, project);
 
-    const assetSizes = await this.getSplashSizes();
-
     const generated: OutputAsset[] = [];
 
-    const splashes = await Promise.all(assetSizes.map((a) => this._generateSplashFromLogo(project, asset, a)));
+    const splashes = await Promise.all(
+      PWA_IOS_DEVICE_SIZES.map((a) => this._generateSplashFromLogo(project, asset, a)),
+    );
 
     generated.push(...splashes.flat());
 
@@ -426,9 +390,7 @@ export class PwaAssetGenerator extends AssetGenerator {
       throw new BadPipelineError('Sharp instance not created');
     }
 
-    const assetSizes = await this.getSplashSizes();
-
-    return Promise.all(assetSizes.map((a) => this._generateSplash(project, asset, a, pipe)));
+    return Promise.all(PWA_IOS_DEVICE_SIZES.map((a) => this._generateSplash(project, asset, a, pipe)));
   }
 
   private async _generateSplash(
