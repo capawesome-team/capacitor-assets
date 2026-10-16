@@ -48,6 +48,8 @@ export class AndroidAssetGenerator extends AssetGenerator {
       case AssetKind.Splash:
       case AssetKind.SplashDark:
         return this.generateSplashes(asset, project);
+      case AssetKind.NotificationIcon:
+        return this.generateNotificationIcons(asset, project);
     }
 
     return [];
@@ -519,6 +521,35 @@ export class AndroidAssetGenerator extends AssetGenerator {
     const outputInfo = await pipe.resize(template.width, template.height).png().toFile(dest);
 
     return [dest, outputInfo];
+  }
+
+  private async generateNotificationIcons(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
+    const pipe = asset.pipeline();
+
+    if (!pipe) {
+      throw new BadPipelineError('Sharp instance not created');
+    }
+
+    const icons = Object.values(AndroidAssetTemplates).filter(
+      (a) => a.kind === AssetKind.NotificationIcon,
+    ) as AndroidOutputAssetTemplate[];
+
+    const resPath = this.getResPath(project);
+
+    return Promise.all(
+      icons.map(async (icon) => {
+        const parentDir = join(resPath, `drawable-${icon.density}`);
+        if (!(await pathExists(parentDir))) {
+          await mkdirp(parentDir);
+        }
+        const dest = join(parentDir, 'ic_notification.png');
+
+        const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
+
+        const relPath = relative(resPath, dest);
+        return new OutputAsset(icon, asset, project, { [relPath]: dest }, { [relPath]: outputInfo });
+      }),
+    );
   }
 
   private getResPath(project: Project): string {
