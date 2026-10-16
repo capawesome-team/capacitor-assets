@@ -72,7 +72,7 @@ export class Project extends MobileProject {
       androidSplash: await this.loadInputAsset('android/splash', AssetKind.Splash, Platform.Android),
       androidSplashDark: await this.loadInputAsset('android/splash-dark', AssetKind.SplashDark, Platform.Android),
       androidNotificationIcon: await this.loadInputAsset(
-        'android/notification',
+        'android/notification-icon',
         AssetKind.NotificationIcon,
         Platform.Android,
       ),

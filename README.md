@@ -74,6 +74,7 @@ assets/
 - `assets/icon-(foreground|background).(png|jpg)` must be at least 1024×1024px
 - `assets/splash[-dark].(png|jpg)` must be at least 2732×2732px
 - `assets/ios/icon-(dark|tinted).(png|jpg)` are optional and must be at least 1024×1024px. They are used for the dark and tinted app icon appearances on iOS 18 and later. The dark icon should have a transparent background, the tinted icon should be a grayscale image (see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)).
+- `assets/android/notification-icon.(png|svg)` (optional) must be at least 96×96px, white on a transparent background
 
 To generate resources with all the default options, just run:
 
@@ -88,6 +89,18 @@ npx @capawesome/capacitor-assets generate --ios
 ```
 
 Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platforms.
+
+#### Android notification icon
+
+If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
+
+To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/apis/push-notifications) or [`@capacitor-firebase/messaging`](https://capawesome.io/docs/sdks/capacitor/firebase/cloud-messaging/), add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
+```
+
+To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
 
 ## PWA Notes
 

@@ -59,6 +59,54 @@ export const ANDROID_XXXHDPI_ICON: AndroidOutputAssetTemplate = {
   density: AndroidDensity.Xxxhdpi,
 };
 
+//
+// Notification icons (24dp status bar icons)
+//
+export const ANDROID_MDPI_NOTIFICATION_ICON: AndroidOutputAssetTemplate = {
+  platform: Platform.Android,
+  kind: AssetKind.NotificationIcon,
+  format: Format.Png,
+  width: 24,
+  height: 24,
+  density: AndroidDensity.Mdpi,
+};
+
+export const ANDROID_HDPI_NOTIFICATION_ICON: AndroidOutputAssetTemplate = {
+  platform: Platform.Android,
+  kind: AssetKind.NotificationIcon,
+  format: Format.Png,
+  width: 36,
+  height: 36,
+  density: AndroidDensity.Hdpi,
+};
+
+export const ANDROID_XHDPI_NOTIFICATION_ICON: AndroidOutputAssetTemplate = {
+  platform: Platform.Android,
+  kind: AssetKind.NotificationIcon,
+  format: Format.Png,
+  width: 48,
+  height: 48,
+  density: AndroidDensity.Xhdpi,
+};
+
+export const ANDROID_XXHDPI_NOTIFICATION_ICON: AndroidOutputAssetTemplate = {
+  platform: Platform.Android,
+  kind: AssetKind.NotificationIcon,
+  format: Format.Png,
+  width: 72,
+  height: 72,
+  density: AndroidDensity.Xxhdpi,
+};
+
+export const ANDROID_XXXHDPI_NOTIFICATION_ICON: AndroidOutputAssetTemplate = {
+  platform: Platform.Android,
+  kind: AssetKind.NotificationIcon,
+  format: Format.Png,
+  width: 96,
+  height: 96,
+  density: AndroidDensity.Xxxhdpi,
+};
+
 /**
  * Adaptive icons
  */

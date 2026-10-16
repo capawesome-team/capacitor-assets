@@ -124,6 +124,22 @@ describe('Android asset test', () => {
     expect(generatedAssets.length).toBe(13);
     await verifySizes(generatedAssets as OutputAsset<AndroidOutputAssetTemplate>[]);
   });
+
+  it('Should generate android notification icons', async () => {
+    const strategy = new AndroidAssetGenerator();
+    const generatedAssets = ((await assets.androidNotificationIcon?.generate(strategy, ctx.project)) ??
+      []) as OutputAsset<AndroidOutputAssetTemplate>[];
+
+    expect(generatedAssets.length).toBe(5);
+
+    for (const asset of generatedAssets) {
+      const dest = asset.getDestFilename(join(`drawable-${asset.template.density}`, 'ic_notification.png'));
+      expect(await pathExists(dest)).toBe(true);
+      expect((await sharp(dest).metadata()).hasAlpha).toBe(true);
+    }
+
+    await verifySizes(generatedAssets);
+  });
 });
 
 describe('Android Asset Test - Logo Only', () => {
