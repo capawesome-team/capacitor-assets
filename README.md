@@ -75,7 +75,7 @@ assets/
 
 - `assets/icon-only.(png|jpg)` must be at least 1024×1024px
 - `assets/icon-(foreground|background).(png|jpg)` must be at least 1024×1024px
-- `assets/icon-monochrome.png` is optional and must be at least 1024×1024px. It is the monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground.
+- `assets/icon-monochrome.png` is optional and must be at least 1024×1024px. It is the monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground. It requires `icon-foreground.png` and `icon-background.png` (or a logo in Easy Mode), because the generated launcher XML references all three layers.
 - `assets/splash[-dark].(png|jpg)` must be at least 2732×2732px
 - `assets/ios/icon-(dark|tinted).(png|jpg)` are optional and must be at least 1024×1024px. They are used for the dark and tinted app icon appearances on iOS 18 and later. The dark icon should have a transparent background, the tinted icon should be a grayscale image (see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)).
 - `assets/android/notification-icon.(png|svg)` (optional) must be at least 96×96px, white on a transparent background
