@@ -106,6 +106,20 @@ To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/ap
 
 To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
 
+To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Rename the generated files after each run:
+
+```shell
+for f in android/app/src/main/res/drawable-*/ic_notification.png; do
+  mv "$f" "$(dirname "$f")/ic_stat_onesignal_default.png"
+done
+```
+
+To tint the icon on Android 12 and later, optionally add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml` (ARGB hex without `#`):
+
+```xml
+<meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
+```
+
 ## PWA Notes
 
 ### Manifest
