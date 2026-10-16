@@ -93,6 +93,14 @@ describe('Android asset test', () => {
 
     Object.values(generatedAssets[0].destFilenames).map(async (f) => expect(await pathExists(f)).toBe(true));
 
+    const { ANDROID_XXXHDPI_ADAPTIVE_ICON } = AndroidAssets;
+    const xxxhdpiForeground = generatedAssets.find((a) => a.template.density === ANDROID_XXXHDPI_ADAPTIVE_ICON.density)!;
+    const metadata = await sharp(Object.values(xxxhdpiForeground.destFilenames)[0]).metadata();
+    expect([metadata.width, metadata.height]).toEqual([
+      ANDROID_XXXHDPI_ADAPTIVE_ICON.width,
+      ANDROID_XXXHDPI_ADAPTIVE_ICON.height,
+    ]);
+
     generatedAssets = ((await assets.iconBackground?.generate(strategy, ctx.project)) ??
       []) as OutputAsset<AndroidOutputAssetTemplateAdaptiveIcon>[];
 
