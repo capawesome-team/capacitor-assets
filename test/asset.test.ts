@@ -1,12 +1,14 @@
 import { copy, rmSync as rm } from '@ionic/utils-fs';
-import tempy from 'tempy';
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 import { Context, loadContext } from '../src/ctx';
 import { Format } from '../src/definitions';
 
 describe('Asset test', () => {
   let ctx: Context;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app', fixtureDir);

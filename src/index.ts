@@ -15,7 +15,7 @@ export * from './tasks/generate';
 
 export * from './platforms/ios';
 export * from './platforms/android';
-export * from './platforms/android';
+export * from './platforms/pwa';
 
 export async function run(): Promise<void> {
   try {

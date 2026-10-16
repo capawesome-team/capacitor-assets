@@ -1,5 +1,6 @@
 import { copy, pathExists, readJSON, rmSync as rm } from '@ionic/utils-fs';
-import tempy from 'tempy';
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
 
 import { Context, loadContext } from '../../src/ctx';
 import { PwaAssetGenerator } from '../../src/platforms/pwa';
@@ -11,7 +12,7 @@ import { OutputAsset } from '../../src/output-asset';
 
 describe('PWA Asset Test', () => {
   let ctx: Context;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   beforeAll(async () => {
     await copy('test/fixtures/app', fixtureDir);
@@ -93,7 +94,7 @@ describe('PWA Asset Test', () => {
 
 describe('PWA Asset Test - logo only', () => {
   let ctx: Context;
-  const fixtureDir = tempy.directory();
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
 
   async function verifySizes(generatedAssets: OutputAsset<PwaOutputAssetTemplate>[]) {
     const sizedSet = await Promise.all(
