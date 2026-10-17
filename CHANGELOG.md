@@ -1,5 +1,12 @@
 # @capawesome/capacitor-assets
 
+## [4.1.1](https://github.com/capawesome-team/capacitor-assets/compare/v4.1.0...v4.1.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **ios:** remove the template splash images the generated ones replace ([#11](https://github.com/capawesome-team/capacitor-assets/issues/11)) ([7c41f3c](https://github.com/capawesome-team/capacitor-assets/commit/7c41f3ce79c8784914ccf9872dc9ce458a99c806))
+
 ## [4.1.0](https://github.com/capawesome-team/capacitor-assets/compare/v4.0.0...v4.1.0) (2026-10-16)
 
 
