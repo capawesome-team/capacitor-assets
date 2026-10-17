@@ -326,7 +326,7 @@ export class IosAssetGenerator extends AssetGenerator {
       );
 
       if (existing) {
-        existing.filename = (g.template as IosOutputAssetTemplate).name;
+        replaceSplashFilename(existing, (g.template as IosOutputAssetTemplate).name, withoutMissing, project);
       } else {
         withoutMissing.push({
           idiom: 'universal',
@@ -356,7 +356,7 @@ export class IosAssetGenerator extends AssetGenerator {
       );
 
       if (existing) {
-        existing.filename = (g.template as IosOutputAssetTemplate).name;
+        replaceSplashFilename(existing, (g.template as IosOutputAssetTemplate).name, withoutMissing, project);
       } else {
         withoutMissing.push({
           appearances: [
@@ -380,4 +380,16 @@ export class IosAssetGenerator extends AssetGenerator {
 
 function iconAppearance(image: any): IosIconAppearance | undefined {
   return image.appearances?.find((a: any) => a.appearance === 'luminosity')?.value;
+}
+
+// Point a splash slot at its new file and delete the file it replaces (e.g. the Capacitor template's
+// splash-2732x2732.png), which would otherwise be left in the image set as an unassigned child.
+function replaceSplashFilename(image: any, filename: string, images: any[], project: Project) {
+  const previous = image.filename;
+  image.filename = filename;
+
+  const isStillReferenced = images.some((i: any) => i.filename === previous);
+  if (previous && previous !== filename && !isStillReferenced) {
+    rmSync(join(project.config.ios!.path!, IOS_SPLASH_IMAGE_SET_PATH, previous), { force: true });
+  }
 }

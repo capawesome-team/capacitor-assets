@@ -1,4 +1,4 @@
-import { copy, pathExists, readFile, rmSync as rm } from '@ionic/utils-fs';
+import { copy, pathExists, readdir, readFile, rmSync as rm, writeFile } from '@ionic/utils-fs';
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 
@@ -72,6 +72,37 @@ describe('iOS Asset Test', () => {
       }),
     ) as IosContents;
     expect(contentsJson.images.find((i) => i.filename === IosAssets.IOS_2X_UNIVERSAL_ANYANY_SPLASH_DARK.name));
+  });
+
+  it('Should remove the template splashes it replaces', async () => {
+    const splashDir = join(ctx.project.config.ios!.path!, IOS_SPLASH_IMAGE_SET_PATH);
+    const templateSplashes = ['splash-2732x2732-2.png', 'splash-2732x2732-1.png', 'splash-2732x2732.png'];
+
+    // The image set as `npx cap add ios` creates it
+    await writeFile(
+      join(splashDir, 'Contents.json'),
+      JSON.stringify({
+        images: templateSplashes.map((filename, i) => ({ idiom: 'universal', filename, scale: `${i + 1}x` })),
+        info: { version: 1, author: 'xcode' },
+      }),
+    );
+    for (const filename of templateSplashes) {
+      await sharp({ create: { width: 1, height: 1, channels: 4, background: '#ffffff' } })
+        .png()
+        .toFile(join(splashDir, filename));
+    }
+
+    const strategy = new IosAssetGenerator();
+    await assets.splash?.generate(strategy, ctx.project);
+    await assets.splashDark?.generate(strategy, ctx.project);
+
+    const contentsJson = JSON.parse(
+      await readFile(join(splashDir, 'Contents.json'), { encoding: 'utf-8' }),
+    ) as IosContents;
+    const referenced = contentsJson.images.map((i) => i.filename).sort();
+    const onDisk = (await readdir(splashDir)).filter((f) => f !== 'Contents.json').sort();
+    expect(onDisk).toEqual(referenced);
+    expect(onDisk).toHaveLength(6);
   });
 
   it('Should generate ios icons', async () => {
