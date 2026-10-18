@@ -153,6 +153,7 @@ export interface PwaOutputAssetTemplate extends OutputAssetTemplate {
   name: string;
   orientation?: Orientation;
   density?: string;
+  maskable?: boolean;
 }
 
 export interface AndroidOutputAssetTemplate extends OutputAssetTemplate {
