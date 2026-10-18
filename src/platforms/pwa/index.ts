@@ -17,7 +17,8 @@ import { ASSETS as PwaAssets, PWA_IOS_DEVICE_SIZES } from './assets';
 
 export const PWA_ASSET_PATH = 'icons';
 
-// Keeps the icon inside the safe zone of maskable icons (inner 80% circle), like Android adaptive icons
+// Insets the icon by the same margin as Android adaptive icons, which keeps padded logos inside the
+// maskable safe zone (inner 80% circle). Artwork reaching the logo corners can still be clipped by round masks.
 const MASKABLE_ICON_SCALE = 0.666;
 
 export interface ManifestIcon {
@@ -353,14 +354,16 @@ export class PwaAssetGenerator extends AssetGenerator {
       replacedIcons.push(this.makeIconManifestEntry(asset.template, relativePath));
     }
 
-    // Delete icons that were replaced
+    // Delete generated icons that were replaced, e.g. the `icon-<size>.webp` files of earlier versions.
+    // Files outside the icons directory are user-owned and left alone.
+    const iconsDir = join(pwaAssetDir, PWA_ASSET_PATH);
     for (const icon of icons) {
-      if (await pathExists(join(pwaDir, icon.src))) {
-        const exists = replacedIcons.some(({ src }) => join(pwaDir, src) === join(pwaDir, icon.src));
-        if (!exists) {
-          rmSync(join(pwaDir, icon.src));
-          warn(`DELETE ${icon.src}`);
-        }
+      const iconPath = join(pwaDir, icon.src);
+      const isGenerated = !relative(iconsDir, iconPath).startsWith('..');
+      const isReplaced = replacedIcons.some(({ src }) => join(pwaDir, src) === iconPath);
+      if (isGenerated && !isReplaced && (await pathExists(iconPath))) {
+        rmSync(iconPath);
+        warn(`DELETE ${icon.src}`);
       }
     }
 

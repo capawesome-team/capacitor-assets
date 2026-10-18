@@ -132,9 +132,9 @@ By default, the tool will look for the manifest file in `public`, `src`, and `ww
 
 Icons are written to `icons/` in your assets directory as `icon-<size>.png` and `icon-maskable-<size>.png` for the sizes 48, 72, 96, 128, 192, 256 and 512. The manifest lists the `icon-<size>.png` files with `purpose: "any"` and the `icon-maskable-<size>.png` files with `purpose: "maskable"`.
 
-When generating from a logo, the logo is placed on the `--iconBackgroundColor` (default `#ffffff`), so the icons are opaque. The maskable icons scale the logo down to two thirds of the icon size, so it stays inside the [maskable icon safe zone](https://web.dev/articles/maskable-icon). A user-supplied `icon-only.png` is used as-is for the `any` icons and is inset on the `--iconBackgroundColor` for the maskable icons.
+When generating from a logo, the logo is placed on the `--iconBackgroundColor` (default `#ffffff`), so the icons are opaque. The maskable icons scale the logo down to two thirds of the icon size, the same inset Android adaptive icons use, so logos with some padding stay inside the [maskable icon safe zone](https://web.dev/articles/maskable-icon). Artwork that reaches the corners of the logo can still be clipped by round masks. A user-supplied `icon-only.png` is used as-is for the `any` icons and is inset on the `--iconBackgroundColor` for the maskable icons.
 
-Earlier versions wrote PNG data to `icon-<size>.webp` files. These files are removed from the manifest and deleted on the next run. Update any references to them, for example `apple-touch-icon` links in your `index.html`.
+Earlier versions wrote PNG data to `icon-<size>.webp` files. These files are removed from the manifest and deleted on the next run; files outside the `icons/` directory are never deleted. Update any references to them, for example `apple-touch-icon` links in your `index.html`.
 
 ### Splash screens
 
