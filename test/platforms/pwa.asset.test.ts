@@ -142,7 +142,7 @@ describe('PWA Asset Test - logo only', () => {
 
     // The maskable icon insets the logo, so the area outside the safe zone shows the background
     expect(await pixelAt('icon-maskable-512.png', 0, 0)).toEqual([0x96, 0x26, 0x46, 255]);
-    expect(await pixelAt('icon-maskable-512.png', 60, 256)).toEqual([0x96, 0x26, 0x46, 255]);
+    expect(await pixelAt('icon-maskable-512.png', 30, 256)).toEqual([0x96, 0x26, 0x46, 255]);
     expect(await pixelAt('icon-maskable-512.png', 256, 256)).not.toEqual([0x96, 0x26, 0x46, 255]);
   });
 

@@ -17,9 +17,11 @@ import { ASSETS as PwaAssets, PWA_IOS_DEVICE_SIZES } from './assets';
 
 export const PWA_ASSET_PATH = 'icons';
 
-// Insets the icon by the same margin as Android adaptive icons, which keeps padded logos inside the
-// maskable safe zone (inner 80% circle). Artwork reaching the logo corners can still be clipped by round masks.
-const MASKABLE_ICON_SCALE = 0.666;
+// Android browsers disagree on how a maskable icon maps to an adaptive icon layer: Firefox pads it by
+// (4 / 5) / (66 / 108) to align the safe zones, while Chrome's WebAPK uses it as the layer directly. The logo
+// takes the geometric middle of the Android adaptive icon scale (0.666) and that scale times the padding
+// factor, so it renders slightly small on Firefox and slightly large on Chrome instead of cropped on one.
+const MASKABLE_ICON_SCALE = 0.666 * Math.sqrt(4 / 5 / (66 / 108));
 
 export interface ManifestIcon {
   src: string;
