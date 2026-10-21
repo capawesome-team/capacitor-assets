@@ -1,4 +1,4 @@
-import { copy, pathExists, readdirp, readFile, rmSync as rm, statSync } from '@ionic/utils-fs';
+import { copy, move, pathExists, readdirp, readFile, rmSync as rm, statSync } from '@ionic/utils-fs';
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import sharp from 'sharp';
@@ -109,6 +109,45 @@ describe('Android asset test', () => {
     Object.values(generatedAssets[0].destFilenames).map(async (f) => expect(await pathExists(f)).toBe(true));
 
     await verifySizes(generatedAssets);
+  });
+
+  it('Should load android adaptive icon layers from the android folder', async () => {
+    const assetDir = join(fixtureDir, 'assets');
+    const layers = ['foreground', 'background', 'monochrome'];
+    for (const layer of layers) {
+      await copy(join(assetDir, `icon-${layer}.png`), join(assetDir, 'android', `icon-${layer}.png`));
+    }
+
+    try {
+      const assets = await ctx.project.loadInputAssets();
+
+      expect(assets.androidIconForeground?.kind).toBe(AssetKind.IconForeground);
+      expect(assets.androidIconBackground?.kind).toBe(AssetKind.IconBackground);
+      expect(assets.androidIconMonochrome?.kind).toBe(AssetKind.IconMonochrome);
+    } finally {
+      for (const layer of layers) {
+        await rm(join(assetDir, 'android', `icon-${layer}.png`), { force: true });
+      }
+    }
+  });
+
+  it('Should reference the monochrome layer from the android folder', async () => {
+    const assetDir = join(fixtureDir, 'assets');
+    await move(join(assetDir, 'icon-monochrome.png'), join(assetDir, 'android', 'icon-monochrome.png'));
+
+    try {
+      const assets = await ctx.project.loadInputAssets();
+      const strategy = new AndroidAssetGenerator();
+      await assets.androidIconMonochrome?.generate(strategy, ctx.project);
+
+      const icLauncherXml = await readFile(
+        join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
+        { encoding: 'utf-8' },
+      );
+      expect(icLauncherXml).toContain('<monochrome>');
+    } finally {
+      await move(join(assetDir, 'android', 'icon-monochrome.png'), join(assetDir, 'icon-monochrome.png'));
+    }
   });
 
   it('Should generate android adaptive icon monochrome layer', async () => {
