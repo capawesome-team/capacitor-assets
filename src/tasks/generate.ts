@@ -20,6 +20,7 @@ export async function run(ctx: Context): Promise<OutputAsset[]> {
     }
 
     const assets = await ctx.project.loadInputAssets();
+    pickMode(assets, ctx.args);
 
     if ([assets.logo, assets.icon, assets.splash, assets.splashDark].every((a) => !a)) {
       error(
@@ -76,6 +77,44 @@ export async function run(ctx: Context): Promise<OutputAsset[]> {
     error(e);
   }
   return [];
+}
+
+// With both a logo and custom files, the custom files would overwrite everything
+// generated from the logo, so use one set: the logo if any Easy Mode option is given.
+const LOGO_ASSETS: (keyof Assets)[] = ['logo', 'logoDark'];
+const CUSTOM_ASSETS: (keyof Assets)[] = [
+  'icon',
+  'iconForeground',
+  'iconBackground',
+  'splash',
+  'splashDark',
+  'iosIcon',
+  'iosSplash',
+  'iosSplashDark',
+  'androidIcon',
+  'androidIconForeground',
+  'androidIconBackground',
+  'androidSplash',
+  'androidSplashDark',
+];
+const EASY_MODE_OPTIONS: (keyof AssetGeneratorOptions)[] = [
+  'iconBackgroundColor',
+  'iconBackgroundColorDark',
+  'splashBackgroundColor',
+  'splashBackgroundColorDark',
+  'logoSplashScale',
+  'logoSplashTargetWidth',
+];
+
+function pickMode(assets: Assets, args: AssetGeneratorOptions) {
+  if (!LOGO_ASSETS.some((k) => assets[k]) || !CUSTOM_ASSETS.some((k) => assets[k])) {
+    return;
+  }
+
+  const easy = EASY_MODE_OPTIONS.some((o) => args[o] !== undefined);
+  for (const k of easy ? CUSTOM_ASSETS : LOGO_ASSETS) {
+    assets[k] = null;
+  }
 }
 
 async function verifyPlatformFolders(platforms: string[], project: Project) {

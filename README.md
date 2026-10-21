@@ -20,6 +20,13 @@ The tool expects a `assets` or `resources` folder to exist in the root of the pr
 
 There are two modes this tool can be used in: Easy Mode, and Full Control mode.
 
+If `assets/` holds files for both modes, only one set is used:
+
+- the logo (`logo.png` or `icon.png`, and `logo-dark.png`) when any Easy Mode option is given;
+- otherwise the custom files (`icon-only.png`, `icon-foreground.png`, `icon-background.png`, `splash.png`, `splash-dark.png`, and their `ios/` and `android/` versions).
+
+These are used in either mode: `icon-monochrome.png` (Android's themed icon), `ios/icon-dark.png`, `ios/icon-tinted.png` and `android/notification-icon.png`.
+
 ### Usage - Easy Mode (recommended)
 
 With Easy Mode, the tool supports generating all the icon and splash assets you need for iOS, Android, and PWA from a single logo file along with an optional dark mode logo, and background colors. This is the easiest way to generate all your assets, but it trades customizability for convenience.
