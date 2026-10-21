@@ -21,6 +21,10 @@ import * as AndroidAssetTemplates from './assets';
 
 type AdaptiveIconLayer = 'foreground' | 'background' | 'monochrome';
 
+// Easy Mode draws the logo on a square of this size, as on iOS: the size of a
+// splash.png.
+const SPLASH_SIZE = 2732;
+
 export class AndroidAssetGenerator extends AssetGenerator {
   constructor(options: AssetGeneratorOptions = {}) {
     super(options);
@@ -77,42 +81,22 @@ export class AndroidAssetGenerator extends AssetGenerator {
     generated.push(...generatedAdaptiveIcons);
 
     if (asset.kind === AssetKind.Logo) {
-      // Generate legacy icons
-      const generatedLegacyIcons = await this.generateLegacyIcon(asset, project);
+      // Generate legacy icons, on the icon background colour as on iOS: a logo
+      // is usually transparent
+      const legacySource = await sharp(asset.path)
+        .flatten({ background: this.options.iconBackgroundColor ?? '#ffffff' })
+        .png()
+        .toBuffer();
+      const generatedLegacyIcons = await this.generateLegacyIcon(asset, project, legacySource);
       generated.push(...generatedLegacyIcons);
 
-      const splashes = Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.Splash);
-
-      const generatedSplashes = await Promise.all(
-        splashes.map(async (splash) => {
-          return this._generateSplashesFromLogo(
-            project,
-            asset,
-            splash,
-            pipe,
-            this.options.splashBackgroundColor ?? '#ffffff',
-          );
-        }),
-      );
-
-      generated.push(...generatedSplashes);
+      const splash = await this.drawSplashFromLogo(asset, this.options.splashBackgroundColor ?? '#ffffff');
+      generated.push(...(await this.generateSplashes(asset, project, AssetKind.Splash, splash)));
     }
 
     // Generate dark splashes
-    const darkSplashes = Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.SplashDark);
-    const generatedSplashes = await Promise.all(
-      darkSplashes.map(async (splash) => {
-        return this._generateSplashesFromLogo(
-          project,
-          asset,
-          splash,
-          pipe,
-          this.options.splashBackgroundColorDark ?? '#111111',
-        );
-      }),
-    );
-
-    generated.push(...generatedSplashes);
+    const splashDark = await this.drawSplashFromLogo(asset, this.options.splashBackgroundColorDark ?? '#111111');
+    generated.push(...(await this.generateSplashes(asset, project, AssetKind.SplashDark, splashDark)));
 
     return [...generated];
   }
@@ -161,43 +145,24 @@ export class AndroidAssetGenerator extends AssetGenerator {
     return [...foregroundImages, ...backgroundImages];
   }
 
-  private async _generateSplashesFromLogo(
-    project: Project,
-    asset: InputAsset,
-    splash: AndroidOutputAssetTemplate,
-    pipe: Sharp,
-    backgroundColor: string,
-  ): Promise<OutputAsset> {
-    // Generate light splash
-    const resPath = this.getResPath(project);
-
-    let drawableDir = `drawable`;
-    if (splash.density) {
-      drawableDir = `drawable-${splash.density}`;
-    }
-
-    const parentDir = join(resPath, drawableDir);
-    if (!(await pathExists(parentDir))) {
-      await mkdirp(parentDir);
-    }
-    const dest = join(resPath, drawableDir, 'splash.png');
-
+  // Draw the logo on a square splash as iOS does, to cut the splashes from as from a splash.png
+  private async drawSplashFromLogo(asset: InputAsset, backgroundColor: string): Promise<Buffer> {
     const targetLogoWidthPercent = this.options.logoSplashScale ?? 0.2;
-    let targetWidth = this.options.logoSplashTargetWidth ?? Math.floor((splash.width ?? 0) * targetLogoWidthPercent);
+    let targetWidth = this.options.logoSplashTargetWidth ?? Math.floor((asset.width ?? 0) * targetLogoWidthPercent);
 
-    if (targetWidth > splash.width || targetWidth > splash.height) {
-      targetWidth = Math.floor((splash.width ?? 0) * targetLogoWidthPercent);
+    if (targetWidth > SPLASH_SIZE) {
+      targetWidth = Math.floor(SPLASH_SIZE * targetLogoWidthPercent);
     }
 
-    if (targetWidth > splash.width || targetWidth > splash.height) {
-      warn(`Logo dimensions exceed dimensions of splash ${splash.width}x${splash.height}, using default logo size`);
-      targetWidth = Math.floor((splash.width ?? 0) * 0.2);
+    if (targetWidth > SPLASH_SIZE) {
+      warn(`Logo dimensions exceed dimensions of splash ${SPLASH_SIZE}x${SPLASH_SIZE}, using default logo size`);
+      targetWidth = Math.floor(SPLASH_SIZE * 0.2);
     }
 
     const canvas = sharp({
       create: {
-        width: splash.width ?? 0,
-        height: splash.height ?? 0,
+        width: SPLASH_SIZE,
+        height: SPLASH_SIZE,
         channels: 4,
         background: backgroundColor,
       },
@@ -205,27 +170,17 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     const resized = await sharp(asset.path).resize(targetWidth).toBuffer();
 
-    const outputInfo = await canvas
+    return canvas
       .composite([{ input: resized, gravity: sharp.gravity.center }])
       .png()
-      .toFile(dest);
-
-    const splashOutput = new OutputAsset(
-      splash,
-      asset,
-      project,
-      {
-        [dest]: dest,
-      },
-      {
-        [dest]: outputInfo,
-      },
-    );
-
-    return splashOutput;
+      .toBuffer();
   }
 
-  private async generateLegacyIcon(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
+  private async generateLegacyIcon(
+    asset: InputAsset,
+    project: Project,
+    source: string | Buffer = asset.path,
+  ): Promise<OutputAsset[]> {
     const icons = Object.values(AndroidAssetTemplates).filter(
       (a) => a.kind === AssetKind.Icon,
     ) as AndroidOutputAssetTemplate[];
@@ -238,7 +193,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     const collected = await Promise.all(
       icons.map(async (icon) => {
-        const [dest, outputInfo] = await this.generateLegacyLauncherIcon(project, asset, icon);
+        const [dest, outputInfo] = await this.generateLegacyLauncherIcon(project, source, icon);
 
         return new OutputAsset(
           icon,
@@ -253,7 +208,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
     collected.push(
       ...(await Promise.all(
         icons.map(async (icon) => {
-          const [dest, outputInfo] = await this.generateRoundLauncherIcon(project, asset, icon);
+          const [dest, outputInfo] = await this.generateRoundLauncherIcon(project, source, icon);
 
           return new OutputAsset(
             icon,
@@ -273,7 +228,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
   private async generateLegacyLauncherIcon(
     project: Project,
-    asset: InputAsset,
+    source: string | Buffer,
     template: AndroidOutputAssetTemplate,
   ): Promise<[string, OutputInfo]> {
     const resPath = this.getResPath(project);
@@ -286,7 +241,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
     // This pipeline is trick, but we need two separate pipelines
     // per https://github.com/lovell/sharp/issues/2378#issuecomment-864132578
     const padding = 8;
-    const resized = await sharp(asset.path)
+    const resized = await sharp(source)
       .resize(template.width, template.height)
       // .composite([{ input: Buffer.from(svg), blend: 'dest-in' }])
       .toBuffer();
@@ -307,7 +262,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
   private async generateRoundLauncherIcon(
     project: Project,
-    asset: InputAsset,
+    source: string | Buffer,
     template: AndroidOutputAssetTemplate,
   ): Promise<[string, OutputInfo]> {
     const svg = `<svg width="${template.width}" height="${template.height}"><circle cx="${template.width / 2}" cy="${
@@ -319,7 +274,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     // This pipeline is tricky, but we need two separate pipelines
     // per https://github.com/lovell/sharp/issues/2378#issuecomment-864132578
-    const resized = await sharp(asset.path).resize(template.width, template.height).toBuffer();
+    const resized = await sharp(source).resize(template.width, template.height).toBuffer();
     const composited = await sharp(resized)
       .composite([{ input: Buffer.from(svg), blend: 'dest-in' }])
       .toBuffer();
@@ -422,15 +377,21 @@ export class AndroidAssetGenerator extends AssetGenerator {
     await project.commit();
   }
 
-  private async generateSplashes(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
-    const pipe = asset.pipeline();
+  // In Easy Mode, splash is the one drawn from the logo, and kind says which.
+  private async generateSplashes(
+    asset: InputAsset,
+    project: Project,
+    kind = asset.kind,
+    splash?: Buffer,
+  ): Promise<OutputAsset[]> {
+    const pipe = splash ? sharp(splash) : asset.pipeline();
 
     if (!pipe) {
       throw new BadPipelineError('Sharp instance not created');
     }
 
     const splashes = (
-      asset.kind === AssetKind.Splash
+      kind === AssetKind.Splash
         ? Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.Splash)
         : Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.SplashDark)
     ) as AndroidOutputAssetTemplateSplash[];

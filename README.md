@@ -49,8 +49,8 @@ Where the provided flags are:
 - `--iconBackgroundColorDark` - the background color (hex value) used when generating icon layers for dark mode (where supported) (default `#111111`)
 - `--splashBackgroundColor` - the background color (hex value) used when generating splash screens (default `#ffffff`)
 - `--splashBackgroundColorDark` - the background color (hex value) used when generating splash screens for dark mode (where supported) (default `#111111`)
-- `--logoSplashTargetWidth` - A specific width to set the logo to when generating splash screens from a single logo file (not used by default, logo is scaled as percentage of splash instead, see `--logoSplashScale`)
-- `--logoSplashScale` - the scale multiplier to apply to the logo when generating splash screens from a single logo file (default: `0.2`)
+- `--logoSplashTargetWidth` - A specific width in pixels to set the logo to when generating splash screens from a single logo file, on the 2732×2732px square every splash is cut from (not used by default, see `--logoSplashScale`)
+- `--logoSplashScale` - the scale multiplier to apply to the logo's own width when generating splash screens from a single logo file (default: `0.2`)
 - `--ios` - explicitly run iOS asset generation. Using a platform flag makes the platform list exclusive.
 - `--android` - explicitly run Android asset generation. Using a platform flag makes the platform list exclusive.
 - `--pwa` - explicitly run PWA asset generation. Using a platform flag makes the platform list exclusive.
