@@ -488,7 +488,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
         if (!(await pathExists(parentDir))) {
           await mkdirp(parentDir);
         }
-        const dest = join(parentDir, 'ic_notification.png');
+        const dest = join(parentDir, `${this.options.androidNotificationIconName ?? 'ic_notification'}.png`);
 
         const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
 

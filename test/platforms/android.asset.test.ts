@@ -156,6 +156,25 @@ describe('Android asset test', () => {
 
     await verifySizes(generatedAssets);
   });
+
+  it('Should generate android notification icons with the given name', async () => {
+    const strategy = new AndroidAssetGenerator({
+      androidNotificationIconName: 'ic_stat_onesignal_default',
+    });
+    const generatedAssets = ((await assets.androidNotificationIcon?.generate(strategy, ctx.project)) ??
+      []) as OutputAsset<AndroidOutputAssetTemplate>[];
+
+    expect(generatedAssets.length).toBe(5);
+
+    for (const asset of generatedAssets) {
+      const dest = asset.getDestFilename(
+        join(`drawable-${asset.template.density}`, 'ic_stat_onesignal_default.png'),
+      );
+      expect(await pathExists(dest)).toBe(true);
+    }
+
+    await verifySizes(generatedAssets);
+  });
 });
 
 describe('Android Asset Test - Logo Only', () => {
