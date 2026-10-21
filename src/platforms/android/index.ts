@@ -1,4 +1,4 @@
-import { mkdirp, pathExists, writeFile } from '@ionic/utils-fs';
+import { mkdirp, pathExists, readFile, writeFile } from '@ionic/utils-fs';
 import { dirname, join, relative } from 'path';
 import type { OutputInfo, Sharp } from 'sharp';
 import sharp from 'sharp';
@@ -10,7 +10,7 @@ import type {
   AndroidOutputAssetTemplateAdaptiveIcon,
   AndroidOutputAssetTemplateSplash,
 } from '../../definitions';
-import { AssetKind, Platform } from '../../definitions';
+import { AssetKind, Format, Platform } from '../../definitions';
 import { BadPipelineError, BadProjectError } from '../../error';
 import type { InputAsset } from '../../input-asset';
 import { OutputAsset } from '../../output-asset';
@@ -20,6 +20,11 @@ import { warn } from '../../util/log';
 import * as AndroidAssetTemplates from './assets';
 
 type AdaptiveIconLayer = 'foreground' | 'background' | 'monochrome';
+
+// The Android 12+ splash icon: 288dp, the middle 36% of the splash.
+const SPLASH_ICON_DP = 288;
+const SPLASH_ICON_CROP = 0.36;
+const SPLASH_ICON_SCALES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 
 export class AndroidAssetGenerator extends AssetGenerator {
   constructor(options: AssetGeneratorOptions = {}) {
@@ -429,6 +434,9 @@ export class AndroidAssetGenerator extends AssetGenerator {
       throw new BadPipelineError('Sharp instance not created');
     }
 
+    // Before the splashes below resize the pipeline
+    await this.writeSplashBackground(project, asset.kind, pipe.clone());
+
     const splashes = (
       asset.kind === AssetKind.Splash
         ? Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.Splash)
@@ -446,7 +454,59 @@ export class AndroidAssetGenerator extends AssetGenerator {
       }),
     );
 
-    return collected;
+    // Android 12+ draws its launch screen from the theme, with a 288dp
+    // windowSplashScreenAnimatedIcon masked to a 192dp circle. Cut that icon from
+    // the middle of the splash, as a bitmap: One UI blurs a vector in this slot.
+    const night = asset.kind === AssetKind.SplashDark ? 'night-' : '';
+    const icons = await Promise.all(
+      Object.entries(SPLASH_ICON_SCALES).map(async ([density, scale]) => {
+        const relPath = join(`drawable-${night}${density}`, 'ic_splash.png');
+        const dest = join(resPath, relPath);
+        await mkdirp(dirname(dest));
+
+        const size = Math.round(SPLASH_ICON_DP * scale);
+        const full = Math.round(size / SPLASH_ICON_CROP);
+        const offset = Math.round((full - size) / 2);
+        const outputInfo = await pipe
+          .clone()
+          .resize(full, full)
+          .extract({ left: offset, top: offset, width: size, height: size })
+          .png()
+          .toFile(dest);
+
+        const template = {
+          platform: Platform.Android,
+          kind: asset.kind,
+          format: Format.Png,
+          width: size,
+          height: size,
+        };
+        return new OutputAsset(template, asset, project, { [relPath]: dest }, { [relPath]: outputInfo });
+      }),
+    );
+
+    return [...collected, ...icons];
+  }
+
+  /**
+   * windowSplashScreenBackground takes a colour, not a drawable: write the
+   * splash's top-left pixel as splash_background in values{,-night}/colors.xml.
+   */
+  private async writeSplashBackground(project: Project, kind: AssetKind, pipe: Sharp): Promise<void> {
+    const dir = join(this.getResPath(project), kind === AssetKind.SplashDark ? 'values-night' : 'values');
+    const file = join(dir, 'colors.xml');
+
+    const pixel = await pipe.extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+    const entry = `<color name="splash_background">#${pixel.toString('hex').toUpperCase()}</color>`;
+
+    let xml = (await pathExists(file))
+      ? await readFile(file, { encoding: 'utf-8' })
+      : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+    const existing = /<color name="splash_background">[^<]*<\/color>/;
+    xml = existing.test(xml) ? xml.replace(existing, entry) : xml.replace('</resources>', `    ${entry}\n</resources>`);
+
+    await mkdirp(dir);
+    await writeFile(file, xml);
   }
 
   private async generateSplash(

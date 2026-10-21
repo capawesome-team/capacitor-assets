@@ -133,12 +133,33 @@ describe('Android asset test', () => {
     const strategy = new AndroidAssetGenerator();
     let generatedAssets = (await assets.splash?.generate(strategy, ctx.project)) ?? [];
 
-    expect(generatedAssets.length).toBe(13);
+    // 13 splashes plus 5 Android 12+ splash icons
+    expect(generatedAssets.length).toBe(18);
 
     generatedAssets = (await assets.splashDark?.generate(strategy, ctx.project)) ?? [];
 
-    expect(generatedAssets.length).toBe(13);
+    expect(generatedAssets.length).toBe(18);
     await verifySizes(generatedAssets as OutputAsset<AndroidOutputAssetTemplate>[]);
+  });
+
+  it('Should generate the Android 12+ splash icon and background colour', async () => {
+    const strategy = new AndroidAssetGenerator();
+    const res = join(fixtureDir, 'android', 'app', 'src', 'main', 'res');
+
+    for (const [splash, night] of [
+      [assets.splash, ''],
+      [assets.splashDark, '-night'],
+    ] as const) {
+      await splash?.generate(strategy, ctx.project);
+
+      const icon = await sharp(join(res, `drawable${night}-xxxhdpi`, 'ic_splash.png')).metadata();
+      expect([icon.width, icon.height]).toEqual([1152, 1152]);
+
+      const pixel = await sharp(splash!.path).extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+      const xml = await readFile(join(res, `values${night}`, 'colors.xml'), { encoding: 'utf-8' });
+      expect(xml.match(/splash_background/g)).toHaveLength(1);
+      expect(xml).toContain(`<color name="splash_background">#${pixel.toString('hex').toUpperCase()}</color>`);
+    }
   });
 
   it('Should generate android notification icons', async () => {

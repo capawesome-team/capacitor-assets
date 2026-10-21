@@ -120,6 +120,23 @@ To tint the icon on Android 12 and later, optionally add the following to the `<
 <meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
 ```
 
+#### Android 12+ splash screen
+
+Android 12 and later ignore `splash.png` and draw the launch screen from the activity theme: one centred icon on a solid colour, not a full-screen image as on iOS. With the logo centred on a plain background, both look the same. From `splash.png` and `splash-dark.png` (or `android/splash.png` and `android/splash-dark.png`), the tool also writes:
+
+- `ic_splash.png` in `res/drawable[-night]-<density>/`: the middle 36% of the splash, 288dp square. Android masks it to a 192dp circle, so keep the logo inside the middle 24% of the splash.
+- `splash_background` in `res/values[-night]/colors.xml`: the colour of the splash's top-left pixel. Other colours in the file are kept.
+
+These files are unused until the launch theme points at them: without it, Android 12 and later show the app's launcher icon on the default window background instead of your splash. Set the launch theme once in `android/app/src/main/res/values/styles.xml`:
+
+```xml
+<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+    <item name="windowSplashScreenBackground">@color/splash_background</item>
+    <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+    <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+</style>
+```
+
 ## PWA Notes
 
 ### Manifest
