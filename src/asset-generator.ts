@@ -6,6 +6,11 @@ export abstract class AssetGenerator {
   constructor(public options: AssetGeneratorOptions) {}
 
   abstract generate(asset: InputAsset, project: Project): Promise<OutputAsset[]>;
+
+  // The width of the logo on an Easy Mode splash of the given width
+  protected logoSplashWidth(splashWidth: number): number {
+    return this.options.logoSplashTargetWidth ?? Math.floor(splashWidth * (this.options.logoSplashScale ?? 0.2));
+  }
 }
 
 export interface AssetGeneratorOptions {
@@ -21,9 +26,9 @@ export interface AssetGeneratorOptions {
   pwaManifestPath?: string;
   /** @deprecated Has no effect. Apple device screen sizes are always taken from a built-in list. */
   pwaNoAppleFetch?: boolean;
-  // Scale amount for logo when generating splashes. Default: 0.2 (20%)
+  // Width of the logo as a fraction of the splash when generating splashes from a logo. Default: 0.2
   logoSplashScale?: number;
-  // Specific width for logo when generating splashes. (not used by default)
+  // Width of the logo in pixels on the splash when generating splashes from a logo (not used by default)
   logoSplashTargetWidth?: number;
   // Android product flavor name where generated assets will be created. Default: main
   androidFlavor?: string;

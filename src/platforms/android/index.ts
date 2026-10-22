@@ -157,15 +157,12 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
   // Draw the logo on a square splash as iOS does, to cut the splashes from as from a splash.png
   private async drawSplashFromLogo(asset: InputAsset, backgroundColor: string): Promise<Buffer> {
-    const targetLogoWidthPercent = this.options.logoSplashScale ?? 0.2;
-    let targetWidth = this.options.logoSplashTargetWidth ?? Math.floor((asset.width ?? 0) * targetLogoWidthPercent);
+    let targetWidth = this.logoSplashWidth(SPLASH_SIZE);
 
     if (targetWidth > SPLASH_SIZE) {
-      targetWidth = Math.floor(SPLASH_SIZE * targetLogoWidthPercent);
-    }
-
-    if (targetWidth > SPLASH_SIZE) {
-      warn(`Logo dimensions exceed dimensions of splash ${SPLASH_SIZE}x${SPLASH_SIZE}, using default logo size`);
+      warn(
+        `Logo width ${targetWidth}px exceeds the ${SPLASH_SIZE}x${SPLASH_SIZE}px splash, using the default logo size`,
+      );
       targetWidth = Math.floor(SPLASH_SIZE * 0.2);
     }
 
