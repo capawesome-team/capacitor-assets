@@ -186,6 +186,8 @@ describe('Android asset test', () => {
   it('Should generate the Android 12+ splash icon and colour and set the launch theme', async () => {
     const strategy = new AndroidAssetGenerator();
     const res = join(fixtureDir, 'android', 'app', 'src', 'main', 'res');
+    // The dark pass runs once android:background is gone, and must not warn about it.
+    const warn = jest.spyOn(console, 'warn');
 
     for (const [splash, night] of [
       [assets.splash, ''],
@@ -205,7 +207,12 @@ describe('Android asset test', () => {
       expect(styles.match(/windowSplashScreenAnimatedIcon/g)).toHaveLength(1);
       expect(styles).toContain('<item name="windowSplashScreenBackground">@color/splash_background</item>');
       expect(styles).toContain('<item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>');
+      expect(styles).not.toContain('@drawable/splash<');
+      expect(styles).toContain('<item name="android:background">@null</item>');
     }
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('Should leave a launch theme that does not extend Theme.SplashScreen alone', async () => {
