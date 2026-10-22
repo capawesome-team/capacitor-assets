@@ -75,9 +75,6 @@ export class IosAssetGenerator extends AssetGenerator {
 
     const generated: OutputAsset[] = [];
 
-    const targetLogoWidthPercent = this.options.logoSplashScale ?? 0.2;
-    const targetWidth = this.options.logoSplashTargetWidth ?? Math.floor((asset.width ?? 0) * targetLogoWidthPercent);
-
     if (asset.kind === AssetKind.Logo) {
       // Generate light splash
       const lightDefaultBackground = '#ffffff';
@@ -99,7 +96,7 @@ export class IosAssetGenerator extends AssetGenerator {
             background: this.options.splashBackgroundColor ?? lightDefaultBackground,
           },
         });
-        const resized = await sharp(asset.path).resize(targetWidth).toBuffer();
+        const resized = await sharp(asset.path).resize(this.logoSplashWidth(lightSplash.width)).toBuffer();
         const lightOutputInfo = await canvas
           .composite([{ input: resized, gravity: sharp.gravity.center }])
           .png()
@@ -143,7 +140,7 @@ export class IosAssetGenerator extends AssetGenerator {
           background: this.options.splashBackgroundColorDark ?? darkDefaultBackground,
         },
       });
-      const resized = await sharp(asset.path).resize(targetWidth).toBuffer();
+      const resized = await sharp(asset.path).resize(this.logoSplashWidth(darkSplash.width)).toBuffer();
       const darkOutputInfo = await canvas
         .composite([{ input: resized, gravity: sharp.gravity.center }])
         .png()

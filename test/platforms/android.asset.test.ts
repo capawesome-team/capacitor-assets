@@ -10,7 +10,9 @@ import {
   AndroidOutputAssetTemplateAdaptiveIcon,
   AssetKind,
   Assets,
+  Platform,
 } from '../../src/definitions';
+import { InputAsset } from '../../src/input-asset';
 import { OutputAsset } from '../../src/output-asset';
 import { AndroidAssetGenerator } from '../../src/platforms/android';
 import * as AndroidAssets from '../../src/platforms/android/assets';
@@ -323,7 +325,7 @@ describe('Android Asset Test - Logo Only', () => {
     let generatedAssets = ((await assets.logo?.generate(strategy, ctx.project)) ??
       []) as OutputAsset<AndroidOutputAssetTemplate>[];
 
-    expect(generatedAssets.length).toBe(50);
+    expect(generatedAssets.length).toBe(60);
     await verifySizes(generatedAssets);
 
     const icLauncherXml = await readFile(
@@ -341,8 +343,50 @@ describe('Android Asset Test - Logo Only', () => {
     let generatedAssets = ((await assets.logoDark?.generate(strategy, ctx.project)) ??
       []) as OutputAsset<AndroidOutputAssetTemplate>[];
 
-    expect(generatedAssets.length).toBe(13);
+    expect(generatedAssets.length).toBe(18);
     await verifySizes(generatedAssets);
+  });
+
+  it('Should cut the splashes from the logo drawn on a square splash', async () => {
+    const strategy = new AndroidAssetGenerator({ splashBackgroundColorDark: '#122140', logoSplashTargetWidth: 600 });
+    await assets.logoDark?.generate(strategy, ctx.project);
+
+    const splash = join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'drawable-port-night-xxxhdpi', 'splash.png');
+    const pixel = await sharp(splash).extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+    expect(pixel.toString('hex')).toBe('122140');
+
+    // The 1280x1920 portrait splash covers its height with the 2732px square,
+    // so the logo is drawn at 1920 / 2732 of its 600px.
+    const logo = await sharp(assets.logoDark!.path).resize(600).trim().toBuffer({ resolveWithObject: true });
+    const drawn = await sharp(splash).trim().toBuffer({ resolveWithObject: true });
+    expect(Math.abs(drawn.info.width - (logo.info.width * 1920) / 2732)).toBeLessThan(2);
+  });
+
+  it('Should draw the logo at a fifth of the splash by default', async () => {
+    await assets.logo?.generate(new AndroidAssetGenerator(), ctx.project);
+
+    // The 1280x1920 portrait splash covers its height with the 2732px square the logo takes a fifth of
+    const splash = join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'drawable-port-night-xxxhdpi', 'splash.png');
+    const drawn = await sharp(splash).trim().toBuffer({ resolveWithObject: true });
+    expect(Math.abs(drawn.info.width - 0.2 * 1920)).toBeLessThan(2);
+  });
+
+  it('Should draw the legacy icons on the icon background colour', async () => {
+    // The fixture logo is opaque, so draw it on a transparent square
+    const path = join(fixtureDir, 'assets', 'logo-transparent.png');
+    await sharp({ create: { width: 1024, height: 1024, channels: 4, background: '#00000000' } })
+      .composite([{ input: assets.logo!.path }])
+      .png()
+      .toFile(path);
+    const logo = new InputAsset(path, AssetKind.Logo, Platform.Any);
+    await logo.load();
+
+    await logo.generate(new AndroidAssetGenerator({ iconBackgroundColor: '#abcdef' }), ctx.project);
+
+    // Inside the 8px padding, in the corner the logo leaves transparent
+    const icon = join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-xxxhdpi', 'ic_launcher.png');
+    const pixel = await sharp(icon).extract({ left: 180, top: 180, width: 1, height: 1 }).raw().toBuffer();
+    expect(pixel.toString('hex')).toBe('abcdefff');
   });
 
   it('Should generate icons in the given flavor folder', async () => {

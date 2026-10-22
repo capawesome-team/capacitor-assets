@@ -220,6 +220,18 @@ describe('iOS Asset Test - Logo Only', () => {
     await verifySizes(generatedAssets);
   });
 
+  it('Should draw the logo at a fifth of the splash by default', async () => {
+    await assets.logo?.generate(new IosAssetGenerator(), ctx.project);
+
+    const splash = join(
+      ctx.project.config.ios!.path!,
+      IOS_SPLASH_IMAGE_SET_PATH,
+      IosAssets.IOS_2X_UNIVERSAL_ANYANY_SPLASH_DARK.name,
+    );
+    const drawn = await sharp(splash).trim().toBuffer({ resolveWithObject: true });
+    expect(Math.abs(drawn.info.width - 0.2 * 2732)).toBeLessThan(2);
+  });
+
   it('Should generate icons and splashes from logo-dark', async () => {
     const strategy = new IosAssetGenerator({
       splashBackgroundColor: '#999999',
