@@ -68,6 +68,8 @@ assets/
 ├── icon-monochrome.png
 ├── splash.png
 ├── splash-dark.png
+├── android/
+│   └── notification-icon.png
 └── ios/
     ├── icon-dark.png
     └── icon-tinted.png
