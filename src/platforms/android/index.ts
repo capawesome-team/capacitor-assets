@@ -1,4 +1,5 @@
 import { mkdirp, pathExists, writeFile } from '@ionic/utils-fs';
+import type { XmlFile } from '@trapezedev/project';
 import { dirname, join, relative } from 'path';
 import type { OutputInfo, Sharp } from 'sharp';
 import sharp from 'sharp';
@@ -10,7 +11,7 @@ import type {
   AndroidOutputAssetTemplateAdaptiveIcon,
   AndroidOutputAssetTemplateSplash,
 } from '../../definitions';
-import { AssetKind, Platform } from '../../definitions';
+import { AssetKind, Format, Platform } from '../../definitions';
 import { BadPipelineError, BadProjectError } from '../../error';
 import type { InputAsset } from '../../input-asset';
 import { OutputAsset } from '../../output-asset';
@@ -24,6 +25,15 @@ type AdaptiveIconLayer = 'foreground' | 'background' | 'monochrome';
 // Easy Mode draws the logo on a square of this size, as on iOS: the size of a
 // splash.png.
 const SPLASH_SIZE = 2732;
+
+// The Android 12+ splash icon: 288dp, the middle 36% of the splash.
+const SPLASH_ICON_DP = 288;
+const SPLASH_ICON_CROP = 0.36;
+const SPLASH_ICON_SCALES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+
+// The theme of the launch activity in the Capacitor template
+const LAUNCH_THEME = 'AppTheme.NoActionBarLaunch';
+const EMPTY_RESOURCES_XML = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
 
 export class AndroidAssetGenerator extends AssetGenerator {
   constructor(options: AssetGeneratorOptions = {}) {
@@ -334,12 +344,13 @@ export class AndroidAssetGenerator extends AssetGenerator {
    * build when a referenced drawable is missing.
    */
   private async writeAdaptiveIconXml(project: Project): Promise<{ [relPath: string]: string }> {
-    const monochrome = project.assets?.iconMonochrome
-      ? `
+    const monochrome =
+      project.assets?.iconMonochrome || project.assets?.androidIconMonochrome
+        ? `
     <monochrome>
         <inset android:drawable="@mipmap/ic_launcher_monochrome" android:inset="16.7%" />
     </monochrome>`
-      : '';
+        : '';
 
     const icLauncherXml = `
 <?xml version="1.0" encoding="utf-8"?>
@@ -390,6 +401,9 @@ export class AndroidAssetGenerator extends AssetGenerator {
       throw new BadPipelineError('Sharp instance not created');
     }
 
+    // Before the splashes below resize the pipeline
+    await this.writeSplashTheme(project, kind, pipe.clone());
+
     const splashes = (
       kind === AssetKind.Splash
         ? Object.values(AndroidAssetTemplates).filter((a) => a.kind === AssetKind.Splash)
@@ -407,7 +421,88 @@ export class AndroidAssetGenerator extends AssetGenerator {
       }),
     );
 
-    return collected;
+    // Android 12+ draws its launch screen from the theme, with a 288dp
+    // windowSplashScreenAnimatedIcon masked to a 192dp circle. Cut that icon from
+    // the middle of the splash, as a bitmap: One UI blurs a vector in this slot.
+    const night = kind === AssetKind.SplashDark ? 'night-' : '';
+    const icons = await Promise.all(
+      Object.entries(SPLASH_ICON_SCALES).map(async ([density, scale]) => {
+        const relPath = join(`drawable-${night}${density}`, 'ic_splash.png');
+        const dest = join(resPath, relPath);
+        await mkdirp(dirname(dest));
+
+        const size = Math.round(SPLASH_ICON_DP * scale);
+        const full = Math.round(size / SPLASH_ICON_CROP);
+        const offset = Math.round((full - size) / 2);
+        const outputInfo = await pipe
+          .clone()
+          .resize(full, full)
+          .extract({ left: offset, top: offset, width: size, height: size })
+          .png()
+          .toFile(dest);
+
+        const template = {
+          platform: Platform.Android,
+          kind,
+          format: Format.Png,
+          width: size,
+          height: size,
+        };
+        return new OutputAsset(template, asset, project, { [relPath]: dest }, { [relPath]: outputInfo });
+      }),
+    );
+
+    return [...collected, ...icons];
+  }
+
+  /**
+   * Android 12+ draws the launch screen from the theme: a colour and an icon, not
+   * a drawable. Writes the splash's top-left pixel as splash_background in
+   * values{,-night}/colors.xml and points the launch theme at it and at ic_splash.
+   */
+  private async writeSplashTheme(project: Project, kind: AssetKind, pipe: Sharp): Promise<void> {
+    const pixel = await pipe.extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+    const color = `#${pixel.toString('hex').toUpperCase()}`;
+
+    const valuesDir = kind === AssetKind.SplashDark ? 'values-night' : 'values';
+    const colors = await this.loadResourceXml(project, join(valuesDir, 'colors.xml'));
+    this.setNamedXmlChild(colors, 'resources', 'color', 'splash_background', color);
+
+    const styles = await this.loadResourceXml(project, join('values', 'styles.xml'));
+    const theme = `resources/style[@name="${LAUNCH_THEME}"]`;
+    if (styles.find(theme)?.[0]?.getAttribute('parent') === 'Theme.SplashScreen') {
+      this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenBackground', '@color/splash_background');
+      this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenAnimatedIcon', '@drawable/ic_splash');
+    } else {
+      warn(
+        `Style ${LAUNCH_THEME} with parent Theme.SplashScreen not found in ${join(this.getResDir(), 'values', 'styles.xml')}, not setting the Android 12+ splash screen theme. See the README.`,
+      );
+    }
+
+    await project.commit();
+  }
+
+  private async loadResourceXml(project: Project, relPath: string): Promise<XmlFile> {
+    const path = join(this.getResPath(project), relPath);
+    if (!(await pathExists(path))) {
+      await mkdirp(dirname(path));
+      await writeFile(path, EMPTY_RESOURCES_XML);
+    }
+
+    const file = project.android!.getXmlFile(join(this.getResDir(), relPath))!;
+    await file.load();
+    return file;
+  }
+
+  // Sets <tag name="…">value</tag> under the parent, replacing an existing one
+  private setNamedXmlChild(file: XmlFile, parent: string, tag: string, name: string, value: string): void {
+    const fragment = `<${tag} name="${name}">${value}</${tag}>`;
+    const existing = `${parent}/${tag}[@name="${name}"]`;
+    if (file.find(existing)?.length) {
+      file.replaceFragment(existing, fragment);
+    } else {
+      file.injectFragment(parent, fragment);
+    }
   }
 
   private async generateSplash(
@@ -449,7 +544,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
         if (!(await pathExists(parentDir))) {
           await mkdirp(parentDir);
         }
-        const dest = join(parentDir, 'ic_notification.png');
+        const dest = join(parentDir, `${this.options.androidNotificationIconName ?? 'ic_notification'}.png`);
 
         const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
 
@@ -460,6 +555,10 @@ export class AndroidAssetGenerator extends AssetGenerator {
   }
 
   private getResPath(project: Project): string {
-    return join(project.config.android!.path!, 'app', 'src', this.options.androidFlavor ?? 'main', 'res');
+    return join(project.config.android!.path!, this.getResDir());
+  }
+
+  private getResDir(): string {
+    return join('app', 'src', this.options.androidFlavor ?? 'main', 'res');
   }
 }

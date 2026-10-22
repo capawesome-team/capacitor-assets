@@ -4,58 +4,121 @@ import { AssetKind, Format, Platform } from '../../definitions';
 export const PWA_48_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-48.webp',
-  format: Format.WebP,
+  name: 'icon-48.png',
+  format: Format.Png,
   width: 48,
   height: 48,
 };
 export const PWA_72_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-72.webp',
-  format: Format.WebP,
+  name: 'icon-72.png',
+  format: Format.Png,
   width: 72,
   height: 72,
 };
 export const PWA_96_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-96.webp',
-  format: Format.WebP,
+  name: 'icon-96.png',
+  format: Format.Png,
   width: 96,
   height: 96,
 };
 export const PWA_128_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-128.webp',
-  format: Format.WebP,
+  name: 'icon-128.png',
+  format: Format.Png,
   width: 128,
   height: 128,
 };
 export const PWA_192_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-192.webp',
-  format: Format.WebP,
+  name: 'icon-192.png',
+  format: Format.Png,
   width: 192,
   height: 192,
 };
 export const PWA_256_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-256.webp',
-  format: Format.WebP,
+  name: 'icon-256.png',
+  format: Format.Png,
   width: 256,
   height: 256,
 };
 export const PWA_512_PX_ICON: PwaOutputAssetTemplate = {
   platform: Platform.Pwa,
   kind: AssetKind.Icon,
-  name: 'icon-512.webp',
-  format: Format.WebP,
+  name: 'icon-512.png',
+  format: Format.Png,
   width: 512,
   height: 512,
+};
+export const PWA_48_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-48.png',
+  format: Format.Png,
+  width: 48,
+  height: 48,
+  maskable: true,
+};
+export const PWA_72_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-72.png',
+  format: Format.Png,
+  width: 72,
+  height: 72,
+  maskable: true,
+};
+export const PWA_96_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-96.png',
+  format: Format.Png,
+  width: 96,
+  height: 96,
+  maskable: true,
+};
+export const PWA_128_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-128.png',
+  format: Format.Png,
+  width: 128,
+  height: 128,
+  maskable: true,
+};
+export const PWA_192_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-192.png',
+  format: Format.Png,
+  width: 192,
+  height: 192,
+  maskable: true,
+};
+export const PWA_256_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-256.png',
+  format: Format.Png,
+  width: 256,
+  height: 256,
+  maskable: true,
+};
+export const PWA_512_PX_MASKABLE_ICON: PwaOutputAssetTemplate = {
+  platform: Platform.Pwa,
+  kind: AssetKind.Icon,
+  name: 'icon-maskable-512.png',
+  format: Format.Png,
+  width: 512,
+  height: 512,
+  maskable: true,
 };
 
 export const PWA_SPLASH: PwaOutputAssetTemplate = {
@@ -75,6 +138,13 @@ export const ASSETS = {
   PWA_192_PX_ICON,
   PWA_256_PX_ICON,
   PWA_512_PX_ICON,
+  PWA_48_PX_MASKABLE_ICON,
+  PWA_72_PX_MASKABLE_ICON,
+  PWA_96_PX_MASKABLE_ICON,
+  PWA_128_PX_MASKABLE_ICON,
+  PWA_192_PX_MASKABLE_ICON,
+  PWA_256_PX_MASKABLE_ICON,
+  PWA_512_PX_MASKABLE_ICON,
   PWA_SPLASH,
 };
 

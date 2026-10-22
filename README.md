@@ -44,6 +44,7 @@ Where the provided flags are:
 
 - `--iosProject` - the path to the iOS project (default `ios/App`)
 - `--androidProject` - the path to the Android project (default `android`)
+- `--androidNotificationIconName` - the resource name of the generated Android notification icon (default `ic_notification`, see [Android notification icon](#android-notification-icon))
 - `--assetPath <path>` - Path to the assets directory for your project. By default will check `"assets"` and `"resources"` directories, in that order.
 - `--iconBackgroundColor` - the background color (hex value) used when generating icon layers for light mode (default `#ffffff`)
 - `--iconBackgroundColorDark` - the background color (hex value) used when generating icon layers for dark mode (where supported) (default `#111111`)
@@ -68,6 +69,8 @@ assets/
 ├── icon-monochrome.png
 ├── splash.png
 ├── splash-dark.png
+├── android/
+│   └── notification-icon.png
 └── ios/
     ├── icon-dark.png
     └── icon-tinted.png
@@ -78,6 +81,7 @@ assets/
 - `assets/icon-monochrome.png` is optional and must be at least 1024×1024px. It is the monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground. It requires `icon-foreground.png` and `icon-background.png` (or a logo in Easy Mode), because the generated launcher XML references all three layers.
 - `assets/splash[-dark].(png|jpg)` must be at least 2732×2732px
 - `assets/ios/icon-(dark|tinted).(png|jpg)` are optional and must be at least 1024×1024px. They are used for the dark and tinted app icon appearances on iOS 18 and later. The dark icon should have a transparent background, the tinted icon should be a grayscale image (see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)).
+- `assets/android/icon-(foreground|background|monochrome).(png|jpg)` are optional and must be at least 1024×1024px. They replace `icon-foreground`, `icon-background` and `icon-monochrome` as the adaptive icon layers on Android only.
 - `assets/android/notification-icon.(png|svg)` (optional) must be at least 96×96px, white on a transparent background
 
 To generate resources with all the default options, just run:
@@ -96,7 +100,7 @@ Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platfor
 
 #### Android notification icon
 
-If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
+If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project, at 24, 36, 48, 72 and 96px. Use `--androidNotificationIconName` to give it another name. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
 
 To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/apis/push-notifications) or [`@capacitor-firebase/messaging`](https://capawesome.io/docs/sdks/capacitor/firebase/cloud-messaging/), add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml`:
 
@@ -106,12 +110,10 @@ To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/ap
 
 To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
 
-To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Rename the generated files after each run:
+To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Generate the icon under that name:
 
 ```shell
-for f in android/app/src/main/res/drawable-*/ic_notification.png; do
-  mv "$f" "$(dirname "$f")/ic_stat_onesignal_default.png"
-done
+npx @capawesome/capacitor-assets generate --androidNotificationIconName ic_stat_onesignal_default
 ```
 
 To tint the icon on Android 12 and later, optionally add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml` (ARGB hex without `#`):
@@ -120,6 +122,16 @@ To tint the icon on Android 12 and later, optionally add the following to the `<
 <meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
 ```
 
+#### Android 12+ splash screen
+
+Android 12 and later draw the launch screen from the activity theme: one centred icon on a solid colour, not a full-screen image as on iOS. Until the theme points at an icon, the system shows the app's launcher icon, and `splash.png` only appears afterwards through the [Splash Screen plugin](https://capacitorjs.com/docs/apis/splash-screen). From `splash.png` and `splash-dark.png` (or `android/splash.png` and `android/splash-dark.png`), the tool therefore also:
+
+- writes `ic_splash.png` to `res/drawable[-night]-<density>/`: the middle 36% of the splash, 288dp square. Android masks it to a 192dp circle, so keep the logo inside the middle 24% of the splash.
+- writes `splash_background` to `res/values[-night]/colors.xml`: the colour of the splash's top-left pixel. Other colours in the file are kept.
+- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `res/values/styles.xml`.
+
+With the logo centred on a plain background, the launch screen then looks like the splash on iOS. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone.
+
 ## PWA Notes
 
 ### Manifest
@@ -127,6 +139,14 @@ To tint the icon on Android 12 and later, optionally add the following to the `<
 This tool will create and/or update the web app manifest used in your project, and supports both the older `manifest.json` file and the newer `manifest.webmanifest` files, preferring `manifest.webmanifest` when no existing manifest is found.
 
 By default, the tool will look for the manifest file in `public`, `src`, and `www` in that order. Use the flag `--pwaManifestPath` to specify the exact path to your web app manifest.
+
+### Icons
+
+Icons are written to `icons/` in your assets directory as `icon-<size>.png` and `icon-maskable-<size>.png` for the sizes 48, 72, 96, 128, 192, 256 and 512. The manifest lists the `icon-<size>.png` files with `purpose: "any"` and the `icon-maskable-<size>.png` files with `purpose: "maskable"`.
+
+When generating from a logo, the logo is placed on the `--iconBackgroundColor` (default `#ffffff`), so the icons are opaque. The maskable icons scale the logo down to about three quarters of the icon size. Android browsers disagree on how a [maskable icon](https://web.dev/articles/maskable-icon) maps to an adaptive icon: Firefox pads it to align the safe zones, Chrome's WebAPK uses it as the adaptive layer directly, so the same icon renders about 1.3 times larger on Chrome than on Firefox. The scale is the geometric middle of both, which keeps the logo uncropped on Chrome and only slightly small on Firefox. Artwork that reaches the corners of the logo can still be clipped by round masks. A user-supplied `icon-only.png` is used as-is for the `any` icons and is inset on the `--iconBackgroundColor` for the maskable icons.
+
+Earlier versions wrote PNG data to `icon-<size>.webp` files. These files are removed from the manifest and deleted on the next run; files outside the `icons/` directory are never deleted. Update any references to them, for example `apple-touch-icon` links in your `index.html`.
 
 ### Splash screens
 
