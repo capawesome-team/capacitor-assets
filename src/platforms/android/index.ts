@@ -333,7 +333,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
 
     // Full bleed, with no inset in ic_launcher.xml: InsetDrawable rounds the inset down, which left a black
     // line on the bottom and right edges at some launcher sizes. The background repeats its edge pixels.
-    const scale = this.options.androidIconScale ?? ADAPTIVE_ICON_SCALE;
+    const scale = this.options.androidAdaptiveIconScale ?? ADAPTIVE_ICON_SCALE;
     const width = Math.round(icon.width * scale);
     const height = Math.round(icon.height * scale);
     const left = Math.floor((icon.width - width) / 2);

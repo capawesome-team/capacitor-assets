@@ -231,15 +231,15 @@ describe('Android asset test', () => {
     expect(await pixel(path, 217, 216)).toBe('ff0000ff');
   });
 
-  it('Should scale the adaptive icon layers by androidIconScale', async () => {
+  it('Should scale the adaptive icon layers by androidAdaptiveIconScale', async () => {
     const foreground = await layerSource('layer-foreground', AssetKind.IconForeground);
     const path = xxxhdpiLayer('foreground');
 
-    await foreground.generate(new AndroidAssetGenerator({ androidIconScale: 0.5 }), ctx.project);
+    await foreground.generate(new AndroidAssetGenerator({ androidAdaptiveIconScale: 0.5 }), ctx.project);
     const half = await sharp(path).trim().toBuffer({ resolveWithObject: true });
     expect([half.info.width, half.info.height]).toEqual([216, 216]);
 
-    await foreground.generate(new AndroidAssetGenerator({ androidIconScale: 1 }), ctx.project);
+    await foreground.generate(new AndroidAssetGenerator({ androidAdaptiveIconScale: 1 }), ctx.project);
     expect(await pixel(path, 0, 0)).toBe('ff0000ff');
   });
 

@@ -120,7 +120,7 @@ Written to `ios/App/App/Assets.xcassets/` (change the project path with `--iosPr
 
 Written to `android/app/src/main/res/` (change the project path with `--androidProject` and the flavor with `--androidFlavor`):
 
-- `mipmap-<density>/ic_launcher_foreground.png`, `ic_launcher_background.png` and `ic_launcher_monochrome.png`, with `mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml`: the adaptive icon. The monochrome layer is only referenced when a monochrome source file exists. The layers are full bleed, with the source at `--androidIconScale` of the layer (`1` for sources drawn to Android's 108dp template).
+- `mipmap-<density>/ic_launcher_foreground.png`, `ic_launcher_background.png` and `ic_launcher_monochrome.png`, with `mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml`: the adaptive icon. The monochrome layer is only referenced when a monochrome source file exists. The layers are full bleed, with the source at `--androidAdaptiveIconScale` of the layer (`1` for sources drawn to Android's 108dp template).
 - `mipmap-<density>/ic_launcher.png` and `ic_launcher_round.png`: the legacy launcher icons for Android 7.1 and older. In Easy Mode the logo is placed on `--iconBackgroundColor`.
 - `drawable-<orientation>[-night]-<density>/splash.png`: the splash screens shown by the [Splash Screen plugin](https://capacitorjs.com/docs/apis/splash-screen).
 - `AndroidManifest.xml`: `android:icon` and `android:roundIcon` point at the generated icons.
@@ -186,7 +186,7 @@ Android browsers disagree on how a [maskable icon](https://web.dev/articles/mask
 | `--androidProject <dir>`               | `android`                         | The Android project.                                                           |
 | `--androidFlavor <name>`               | `main`                            | The Android product flavor the assets are written to (`app/src/<flavor>/res`). |
 | `--androidNotificationIconName <name>` | `ic_notification`                 | The resource name of the Android notification icon.                            |
-| `--androidIconScale <scale>`           | `0.6667`                          | Android adaptive icon source scale, 0 to 1 of the layer.                       |
+| `--androidAdaptiveIconScale <scale>`   | `0.6667`                          | Android adaptive icon source scale, 0 to 1 of the layer.                       |
 | `--pwaManifestPath <path>`             | found in `public`, `src` or `www` | The web app manifest file.                                                     |
 | `--verbose`                            |                                   | Verbose output.                                                                |
 

@@ -106,7 +106,7 @@ export function runProgram(ctx: Context): void {
       parseResourceNameOption,
     )
     .option(
-      '--androidIconScale <scale>',
+      '--androidAdaptiveIconScale <scale>',
       'Android adaptive icon source scale, 0 to 1 of the layer. Defaults to 0.6667.',
       parseScaleOption,
     )
