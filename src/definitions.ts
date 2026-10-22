@@ -19,6 +19,7 @@ export interface Assets {
   androidIcon?: InputAsset | null;
   androidIconForeground?: InputAsset | null;
   androidIconBackground?: InputAsset | null;
+  androidIconMonochrome?: InputAsset | null;
 
   androidSplash?: InputAsset | null;
   androidSplashDark?: InputAsset | null;

@@ -379,12 +379,13 @@ export class AndroidAssetGenerator extends AssetGenerator {
    * build when a referenced drawable is missing.
    */
   private async writeAdaptiveIconXml(project: Project): Promise<{ [relPath: string]: string }> {
-    const monochrome = project.assets?.iconMonochrome
-      ? `
+    const monochrome =
+      project.assets?.iconMonochrome || project.assets?.androidIconMonochrome
+        ? `
     <monochrome>
         <inset android:drawable="@mipmap/ic_launcher_monochrome" android:inset="16.7%" />
     </monochrome>`
-      : '';
+        : '';
 
     const icLauncherXml = `
 <?xml version="1.0" encoding="utf-8"?>
