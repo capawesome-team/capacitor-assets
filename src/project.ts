@@ -57,6 +57,7 @@ export class Project extends MobileProject {
       iconForeground: await this.loadInputAsset('icon-foreground', AssetKind.IconForeground, Platform.Any),
       iconBackground: await this.loadInputAsset('icon-background', AssetKind.IconBackground, Platform.Any),
       iconMonochrome: await this.loadInputAsset('icon-monochrome', AssetKind.IconMonochrome, Platform.Any),
+      iconMaskable: await this.loadInputAsset('icon-maskable', AssetKind.IconMaskable, Platform.Any),
       splash: await this.loadInputAsset('splash', AssetKind.Splash, Platform.Any),
       splashDark: await this.loadInputAsset('splash-dark', AssetKind.SplashDark, Platform.Any),
 

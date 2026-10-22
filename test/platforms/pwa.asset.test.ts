@@ -80,6 +80,31 @@ describe('PWA Asset Test', () => {
     ).toBe(true);
   });
 
+  it('Should use a custom maskable icon as is', async () => {
+    const maskablePath = join(fixtureDir, 'assets', 'icon-maskable.png');
+    await sharp({ create: { width: 1024, height: 1024, channels: 4, background: '#00ff00' } })
+      .png()
+      .toFile(maskablePath);
+
+    try {
+      const assets = await ctx.project.loadInputAssets();
+      const strategy = new PwaAssetGenerator({ iconBackgroundColor: '#962646' });
+      const generated = (await assets.icon!.generate(strategy, ctx.project)) as OutputAsset<PwaOutputAssetTemplate>[];
+
+      const maskable = generated.find((asset) => asset.template.name === 'icon-maskable-512.png')!;
+      expect(maskable.asset.kind).toBe(AssetKind.IconMaskable);
+      const { data, info } = await sharp(maskable.destFilenames['icon-maskable-512.png'])
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      expect(Array.from(data.subarray(0, info.channels))).toEqual([0, 255, 0, 255]);
+
+      const manifest = await strategy.getManifestJson(ctx.project);
+      expect(manifest.icons.filter((icon: any) => icon.purpose === 'maskable').length).toBe(7);
+    } finally {
+      await rm(maskablePath, { force: true });
+    }
+  });
+
   it('Should generate PWA splashes', async () => {
     const assets = await ctx.project.loadInputAssets();
 
