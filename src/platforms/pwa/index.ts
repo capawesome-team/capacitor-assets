@@ -123,7 +123,6 @@ export class PwaAssetGenerator extends AssetGenerator {
 
     if (asset.kind === AssetKind.Logo) {
       // Generate light splash
-      const lightDefaultBackground = '#ffffff';
       const lightDest = join(destDir, `apple-splash-${width}-${height}@${density}.png`);
 
       const canvas = sharp({
@@ -131,7 +130,7 @@ export class PwaAssetGenerator extends AssetGenerator {
           width,
           height,
           channels: 4,
-          background: lightDefaultBackground,
+          background: this.options.splashBackgroundColor ?? '#ffffff',
         },
       });
 
@@ -169,7 +168,6 @@ export class PwaAssetGenerator extends AssetGenerator {
     }
 
     // Generate dark splash
-    const darkDefaultBackground = '#111111';
     const darkDest = join(destDir, `apple-splash-${width}-${height}@${density}-dark.png`);
 
     const canvas = sharp({
@@ -177,7 +175,7 @@ export class PwaAssetGenerator extends AssetGenerator {
         width,
         height,
         channels: 4,
-        background: darkDefaultBackground,
+        background: this.options.splashBackgroundColorDark ?? '#111111',
       },
     });
 
