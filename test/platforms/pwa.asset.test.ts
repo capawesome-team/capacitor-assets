@@ -55,14 +55,16 @@ describe('PWA Asset Test', () => {
     expect(sizedSet.every((e) => !!e)).toBe(true);
 
     const manifest = await strategy.getManifestJson(ctx.project);
-    expect(manifest.icons.length).toBe(7);
+    expect(manifest.icons.length).toBe(14);
+    expect(manifest.icons.filter((icon: any) => icon.purpose === 'any').length).toBe(7);
+    expect(manifest.icons.filter((icon: any) => icon.purpose === 'maskable').length).toBe(7);
 
     expect(
       manifest.icons
         .map((icon: any) => {
           const fname = parse(icon.src).name;
-          const num = fname.split('-')[1];
-          return icon.sizes === `${num}x${num}`;
+          const num = fname.split('-').pop();
+          return icon.sizes === `${num}x${num}` && icon.type === 'image/png';
         })
         .every((i: any) => !!i),
     ).toBe(true);
@@ -72,7 +74,7 @@ describe('PWA Asset Test', () => {
       manifest.icons
         .map((icon: any) => {
           const ext = parse(icon.src).ext;
-          return ext === '.webp' && !isAbsolute(icon.src);
+          return ext === '.png' && !isAbsolute(icon.src);
         })
         .every((i: any) => !!i),
     ).toBe(true);
@@ -120,6 +122,28 @@ describe('PWA Asset Test - logo only', () => {
 
   afterAll(async () => {
     await rm(fixtureDir, { force: true, recursive: true });
+  });
+
+  it('Should place the logo on the icon background color', async () => {
+    const assets = await ctx.project.loadInputAssets();
+
+    const strategy = new PwaAssetGenerator({
+      iconBackgroundColor: '#962646',
+    });
+
+    const generated = (await assets.logo!.generate(strategy, ctx.project)) as OutputAsset<PwaOutputAssetTemplate>[];
+
+    const pixelAt = async (name: string, x: number, y: number) => {
+      const icon = generated.find((asset) => asset.template.name === name)!;
+      const { data, info } = await sharp(icon.destFilenames[name]).raw().toBuffer({ resolveWithObject: true });
+      const offset = (y * info.width + x) * info.channels;
+      return Array.from(data.subarray(offset, offset + info.channels));
+    };
+
+    // The maskable icon insets the logo, so the area outside the safe zone shows the background
+    expect(await pixelAt('icon-maskable-512.png', 0, 0)).toEqual([0x96, 0x26, 0x46, 255]);
+    expect(await pixelAt('icon-maskable-512.png', 30, 256)).toEqual([0x96, 0x26, 0x46, 255]);
+    expect(await pixelAt('icon-maskable-512.png', 256, 256)).not.toEqual([0x96, 0x26, 0x46, 255]);
   });
 
   it('Should update manifest with generated assets and colors from logo', async () => {

@@ -130,6 +130,14 @@ This tool will create and/or update the web app manifest used in your project, a
 
 By default, the tool will look for the manifest file in `public`, `src`, and `www` in that order. Use the flag `--pwaManifestPath` to specify the exact path to your web app manifest.
 
+### Icons
+
+Icons are written to `icons/` in your assets directory as `icon-<size>.png` and `icon-maskable-<size>.png` for the sizes 48, 72, 96, 128, 192, 256 and 512. The manifest lists the `icon-<size>.png` files with `purpose: "any"` and the `icon-maskable-<size>.png` files with `purpose: "maskable"`.
+
+When generating from a logo, the logo is placed on the `--iconBackgroundColor` (default `#ffffff`), so the icons are opaque. The maskable icons scale the logo down to about three quarters of the icon size. Android browsers disagree on how a [maskable icon](https://web.dev/articles/maskable-icon) maps to an adaptive icon: Firefox pads it to align the safe zones, Chrome's WebAPK uses it as the adaptive layer directly, so the same icon renders about 1.3 times larger on Chrome than on Firefox. The scale is the geometric middle of both, which keeps the logo uncropped on Chrome and only slightly small on Firefox. Artwork that reaches the corners of the logo can still be clipped by round masks. A user-supplied `icon-only.png` is used as-is for the `any` icons and is inset on the `--iconBackgroundColor` for the maskable icons.
+
+Earlier versions wrote PNG data to `icon-<size>.webp` files. These files are removed from the manifest and deleted on the next run; files outside the `icons/` directory are never deleted. Update any references to them, for example `apple-touch-icon` links in your `index.html`.
+
 ### Splash screens
 
 iOS splash screens (`apple-touch-startup-image`) are generated for a built-in list of iPhone and iPad screen sizes. The list is based on the device screen dimensions table of the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and is updated with new releases of this tool. Earlier versions fetched the sizes from the Apple website at runtime; this no longer works because Apple removed the table, so the fetch and the `--pwaNoAppleFetch` flag have no effect anymore.
