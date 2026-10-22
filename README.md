@@ -4,62 +4,62 @@
 [![npm downloads](https://img.shields.io/npm/dm/@capawesome/capacitor-assets)](https://www.npmjs.com/package/@capawesome/capacitor-assets)
 [![license](https://img.shields.io/npm/l/@capawesome/capacitor-assets)](https://github.com/capawesome-team/capacitor-assets/blob/main/LICENSE)
 
-This tool will crop and resize JPEG and PNG source images to generate icons and splash screens for iOS, Android, and Progressive Web Apps using [Capacitor](https://capacitorjs.com/).
+Generates the icons and splash screens of a [Capacitor](https://capacitorjs.com/) app for iOS, Android and Progressive Web Apps, from a single logo or from your own source images.
 
-This is the maintained fork of [@capacitor/assets](https://github.com/ionic-team/capacitor-assets) by [Capawesome](https://capawesome.io/). It is a drop-in replacement: only the package name changed.
+This is the maintained fork of [@capacitor/assets](https://github.com/ionic-team/capacitor-assets) by [Capawesome](https://capawesome.io/). It is a drop-in replacement: only the package name changed. See [Migrating from @capacitor/assets](#migrating-from-capacitorassets).
 
-## Install
+## Getting started
 
-```shell
-npm install --save-dev @capawesome/capacitor-assets
-```
+1. Install the package:
 
-## Usage
+   ```shell
+   npm install --save-dev @capawesome/capacitor-assets
+   ```
 
-The tool expects a `assets` or `resources` folder to exist in the root of the project.
+2. Put a `logo.png` of at least 1024×1024px, ideally with a transparent background, into an `assets/` folder in the root of your project.
 
-There are two modes this tool can be used in: Easy Mode, and Full Control mode.
+3. Generate the assets for every platform in your project:
 
-### Usage - Easy Mode (recommended)
+   ```shell
+   npx @capawesome/capacitor-assets generate
+   ```
 
-With Easy Mode, the tool supports generating all the icon and splash assets you need for iOS, Android, and PWA from a single logo file along with an optional dark mode logo, and background colors. This is the easiest way to generate all your assets, but it trades customizability for convenience.
+The icons and splash screens are written straight into your iOS, Android and web projects. Run the command again whenever the logo changes.
 
-To use this mode, create a single `logo.png` or `icon.png` with an optional `logo-dark.png` in `assets/` (the tool also supports using SVG files as source images, substitute `.svg` as needed):
+To set your brand colors, see [Easy Mode](#easy-mode). To use your own icons and splash screens instead of a logo, see [Custom Mode](#custom-mode).
+
+## Source files
+
+The tool reads its source files from the `assets/` folder in the root of your project, or from `resources/` if that exists instead. Use `--assetPath` to point at another folder. There are two ways to fill it.
+
+### Easy Mode
+
+Easy Mode generates everything from one logo. It is the recommended way: less work for you, and the result looks the same on every platform. It trades customizability for convenience.
 
 ```
 assets/
 ├── logo.png
-└── logo-dark.png
+├── logo-dark.png
+└── icon-monochrome.png
 ```
 
-To support themed app icons on Android 13+, you can also add an optional `icon-monochrome.png` (see Custom Mode).
+| File                  | Minimum size | Notes                                                                                                |
+| --------------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
+| `logo.(png\|svg)`     | 1024×1024px  | The logo. `icon.(png\|svg)` works as an alternative name.                                            |
+| `logo-dark.png`       | 1024×1024px  | Optional. The logo for the dark mode splash screens.                                                 |
+| `icon-monochrome.png` | 1024×1024px  | Optional. The monochrome layer for themed app icons on Android 13+, see [Custom Mode](#custom-mode). |
 
-Then, generate the assets and provide the background colors that will be used to generate background layers for icons:
+The logo is placed on a background color for the icons and on another one for the splash screens. Pass your brand colors as options:
 
 ```shell
-npx @capawesome/capacitor-assets generate --iconBackgroundColor '#eeeeee' --iconBackgroundColorDark '#222222' --splashBackgroundColor '#eeeeee' --splashBackgroundColorDark '#111111'
+npx @capawesome/capacitor-assets generate --iconBackgroundColor '#eeeeee' --splashBackgroundColor '#eeeeee' --splashBackgroundColorDark '#111111'
 ```
 
-Where the provided flags are:
+On the splash screens, the logo is one fifth of the width by default. Change that with `--logoSplashScale` or `--logoSplashTargetWidth`, see [Options](#options).
 
-- `--iosProject` - the path to the iOS project (default `ios/App`)
-- `--androidProject` - the path to the Android project (default `android`)
-- `--androidNotificationIconName` - the resource name of the generated Android notification icon (default `ic_notification`, see [Android notification icon](#android-notification-icon))
-- `--assetPath <path>` - Path to the assets directory for your project. By default will check `"assets"` and `"resources"` directories, in that order.
-- `--iconBackgroundColor` - the background color (hex value) used when generating icon layers for light mode (default `#ffffff`)
-- `--iconBackgroundColorDark` - the background color (hex value) used when generating icon layers for dark mode (where supported) (default `#111111`)
-- `--splashBackgroundColor` - the background color (hex value) used when generating splash screens (default `#ffffff`)
-- `--splashBackgroundColorDark` - the background color (hex value) used when generating splash screens for dark mode (where supported) (default `#111111`)
-- `--logoSplashTargetWidth` - the width of the logo in pixels on the 2732×2732px splash the splash screens are generated from (not used by default, see `--logoSplashScale`)
-- `--logoSplashScale` - the width of the logo as a fraction of the 2732×2732px splash the splash screens are generated from (default: `0.2`)
-- `--ios` - explicitly run iOS asset generation. Using a platform flag makes the platform list exclusive.
-- `--android` - explicitly run Android asset generation. Using a platform flag makes the platform list exclusive.
-- `--pwa` - explicitly run PWA asset generation. Using a platform flag makes the platform list exclusive.
-- `--pwaNoAppleFetch` - deprecated and has no effect. Apple device screen sizes are always taken from a built-in list (see [Splash screens](#splash-screens)).
+### Custom Mode
 
-### Usage - Custom Mode
-
-This mode provides full control over the assets used to generate icons and splash screens, but requires more source files. To use this mode, provide custom icons and splash screen source images as shown below:
+Custom Mode gives you full control: you provide the icon layers and the splash screens yourself.
 
 ```
 assets/
@@ -68,94 +68,161 @@ assets/
 ├── icon-background.png
 ├── icon-monochrome.png
 ├── splash.png
-├── splash-dark.png
-├── android/
-│   └── notification-icon.png
-└── ios/
-    ├── icon-dark.png
-    └── icon-tinted.png
+└── splash-dark.png
 ```
 
-- `assets/icon-only.(png|jpg)` must be at least 1024×1024px
-- `assets/icon-(foreground|background).(png|jpg)` must be at least 1024×1024px
-- `assets/icon-monochrome.png` is optional and must be at least 1024×1024px. It is the monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground. It requires `icon-foreground.png` and `icon-background.png` (or a logo in Easy Mode), because the generated launcher XML references all three layers.
-- `assets/splash[-dark].(png|jpg)` must be at least 2732×2732px
-- `assets/ios/icon-(dark|tinted).(png|jpg)` are optional and must be at least 1024×1024px. They are used for the dark and tinted app icon appearances on iOS 18 and later. The dark icon should have a transparent background, the tinted icon should be a grayscale image (see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)).
-- `assets/android/icon-(foreground|background|monochrome).(png|jpg)` are optional and must be at least 1024×1024px. They replace `icon-foreground`, `icon-background` and `icon-monochrome` as the adaptive icon layers on Android only.
-- `assets/android/notification-icon.(png|svg)` (optional) must be at least 96×96px, white on a transparent background
+| File                         | Minimum size | Notes                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `icon-only.(png\|jpg)`       | 1024×1024px  | The app icon on iOS and PWA, and the legacy launcher icon on Android.                                                                                                                                                                                                                                                                                                       |
+| `icon-foreground.(png\|jpg)` | 1024×1024px  | The foreground layer of the Android adaptive icon.                                                                                                                                                                                                                                                                                                                          |
+| `icon-background.(png\|jpg)` | 1024×1024px  | The background layer of the Android adaptive icon.                                                                                                                                                                                                                                                                                                                          |
+| `icon-monochrome.(png\|jpg)` | 1024×1024px  | Optional. The monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground. Needs the foreground and background layers (or a logo), because the launcher XML references all three. |
+| `splash.(png\|jpg)`          | 2732×2732px  | The splash screen. Keep the artwork in the middle, the edges are cropped on most screens.                                                                                                                                                                                                                                                                                   |
+| `splash-dark.(png\|jpg)`     | 2732×2732px  | Optional. The splash screen for dark mode.                                                                                                                                                                                                                                                                                                                                  |
 
-To generate resources with all the default options, just run:
+Custom files win over the logo. If the folder holds both, the custom files overwrite what the logo generated for the same output. `logo.png` plus `splash.png`, for example, gives icons from the logo and splash screens from `splash.png`.
+
+### Platform-specific files
+
+Files in `assets/ios/` and `assets/android/` apply to one platform only and override the file of the same name in `assets/`.
+
+| File                                                           | Minimum size | Notes                                                                                                                                                     |
+| -------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ios/icon.(png\|jpg)`                                          | 1024×1024px  | The iOS app icon.                                                                                                                                         |
+| `ios/icon-dark.(png\|jpg)`                                     | 1024×1024px  | The dark app icon on iOS 18+. Use a transparent background.                                                                                               |
+| `ios/icon-tinted.(png\|jpg)`                                   | 1024×1024px  | The tinted app icon on iOS 18+. Use a grayscale image, see [Apple's guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons). |
+| `ios/splash[-dark].(png\|jpg)`                                 | 2732×2732px  | The iOS splash screens.                                                                                                                                   |
+| `android/icon.(png\|jpg)`                                      | 1024×1024px  | The Android legacy launcher icon.                                                                                                                         |
+| `android/icon-(foreground\|background\|monochrome).(png\|jpg)` | 1024×1024px  | The Android adaptive icon layers.                                                                                                                         |
+| `android/splash[-dark].(png\|jpg)`                             | 2732×2732px  | The Android splash screens.                                                                                                                               |
+| `android/notification-icon.(png\|svg)`                         | 96×96px      | The Android notification icon, white on a transparent background. See [Notification icon](#notification-icon).                                            |
+
+## Generated assets
+
+Without a platform option, `generate` runs for every platform it finds in the project. Pass `--ios`, `--android` or `--pwa` to pick platforms:
 
 ```shell
-npx @capawesome/capacitor-assets generate
+npx @capawesome/capacitor-assets generate --ios --android
 ```
 
-`@capawesome/capacitor-assets` accepts a platform for the first argument (`ios`, `android`, or `pwa` currently). If specified, resources are generated only for that platform:
+### iOS
 
-```shell
-npx @capawesome/capacitor-assets generate --ios
-```
+Written to `ios/App/App/Assets.xcassets/` (change the project path with `--iosProject`):
 
-Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platforms.
+- `AppIcon.appiconset/`: the 1024×1024px app icon, plus the dark and tinted variants when `ios/icon-dark` and `ios/icon-tinted` exist. The icon is placed on `--iconBackgroundColor`, because iOS needs an opaque icon.
+- `Splash.imageset/`: the 2732×2732px universal splash screens at 1x, 2x and 3x, in light and dark mode. The `Contents.json` files are updated and the template images are removed.
 
-#### Android notification icon
+### Android
 
-If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project, at 24, 36, 48, 72 and 96px. Use `--androidNotificationIconName` to give it another name. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
+Written to `android/app/src/main/res/` (change the project path with `--androidProject` and the flavor with `--androidFlavor`):
 
-To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/apis/push-notifications) or [`@capacitor-firebase/messaging`](https://capawesome.io/docs/sdks/capacitor/firebase/cloud-messaging/), add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml`:
+- `mipmap-<density>/ic_launcher_foreground.png`, `ic_launcher_background.png` and `ic_launcher_monochrome.png`, with `mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml`: the adaptive icon. The monochrome layer is only referenced when a monochrome source file exists.
+- `mipmap-<density>/ic_launcher.png` and `ic_launcher_round.png`: the legacy launcher icons for Android 7.1 and older. In Easy Mode the logo is placed on `--iconBackgroundColor`.
+- `drawable-<orientation>[-night]-<density>/splash.png`: the splash screens shown by the [Splash Screen plugin](https://capacitorjs.com/docs/apis/splash-screen).
+- `AndroidManifest.xml`: `android:icon` and `android:roundIcon` point at the generated icons.
 
-```xml
-<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
-```
+#### Android 12+ launch screen
 
-To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
+Android 12 and later draw the launch screen from the activity theme: one centered icon on a solid color, not a full-screen image. Until the theme points at an icon, the system shows the launcher icon, and `splash.png` only appears afterwards through the Splash Screen plugin. The tool therefore also:
 
-To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Generate the icon under that name:
+- writes `drawable[-night]-<density>/ic_splash.png`: the middle 36% of the splash as a 288dp square. Android masks it to a 192dp circle, so keep the artwork inside the middle 24% of the splash. In Easy Mode, keep `--logoSplashScale` at or below `0.24`, or `--logoSplashTargetWidth` at or below `655`.
+- writes the color `splash_background` to `values[-night]/colors.xml`: the color of the top-left pixel of the splash. Other colors in the file are kept.
+- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `values/styles.xml`. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone.
 
-```shell
-npx @capawesome/capacitor-assets generate --androidNotificationIconName ic_stat_onesignal_default
-```
+With the logo centered on a plain background, the launch screen then looks like the splash screen on iOS.
 
-To tint the icon on Android 12 and later, optionally add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml` (ARGB hex without `#`):
+#### Notification icon
 
-```xml
-<meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
-```
+If `assets/android/notification-icon.png` exists, the tool writes `drawable-<density>/ic_notification.png` at 24, 36, 48, 72 and 96px. Android only renders the alpha channel of this icon, so use white pixels on a transparent background. Use `--androidNotificationIconName` to change the resource name.
 
-#### Android 12+ splash screen
+Then point your notification plugin at it:
 
-Android 12 and later draw the launch screen from the activity theme: one centred icon on a solid colour, not a full-screen image as on iOS. Until the theme points at an icon, the system shows the app's launcher icon, and `splash.png` only appears afterwards through the [Splash Screen plugin](https://capacitorjs.com/docs/apis/splash-screen). From `splash.png` and `splash-dark.png` (or `android/splash.png` and `android/splash-dark.png`), or from the logo in Easy Mode, the tool therefore also:
+- [`@capacitor/push-notifications`](https://capacitorjs.com/docs/apis/push-notifications) and [`@capacitor-firebase/messaging`](https://capawesome.io/docs/sdks/capacitor/firebase/cloud-messaging/): add this to the `<application>` element of `android/app/src/main/AndroidManifest.xml`:
 
-- writes `ic_splash.png` to `res/drawable[-night]-<density>/`: the middle 36% of the splash, 288dp square. Android masks it to a 192dp circle, so keep the logo inside the middle 24% of the splash.
-- writes `splash_background` to `res/values[-night]/colors.xml`: the colour of the splash's top-left pixel. Other colours in the file are kept.
-- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `res/values/styles.xml`.
+  ```xml
+  <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
+  ```
 
-With the logo centred on a plain background, the launch screen then looks like the splash on iOS. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone. In Easy Mode, keep `--logoSplashScale` at or below `0.24`, or `--logoSplashTargetWidth` at or below `655`, so the logo fits the circle.
+- [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications): set `smallIcon` to `ic_notification` in the plugin configuration.
 
-## PWA Notes
+- [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons): OneSignal reads a fixed resource name, so generate the icon under that name:
 
-### Manifest
+  ```shell
+  npx @capawesome/capacitor-assets generate --androidNotificationIconName ic_stat_onesignal_default
+  ```
 
-This tool will create and/or update the web app manifest used in your project, and supports both the older `manifest.json` file and the newer `manifest.webmanifest` files, preferring `manifest.webmanifest` when no existing manifest is found.
+  To tint the icon on Android 12 and later, add this to the `<application>` element (ARGB hex without `#`):
 
-By default, the tool will look for the manifest file in `public`, `src`, and `www` in that order. Use the flag `--pwaManifestPath` to specify the exact path to your web app manifest.
+  ```xml
+  <meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
+  ```
 
-### Icons
+### PWA
 
-Icons are written to `icons/` in your assets directory as `icon-<size>.png` and `icon-maskable-<size>.png` for the sizes 48, 72, 96, 128, 192, 256 and 512. The manifest lists the `icon-<size>.png` files with `purpose: "any"` and the `icon-maskable-<size>.png` files with `purpose: "maskable"`.
+Written to the `icons/` folder of your web assets directory (`public`, `src` or `www`, whichever exists first) and to the web app manifest:
 
-When generating from a logo, the logo is placed on the `--iconBackgroundColor` (default `#ffffff`), so the icons are opaque. The maskable icons scale the logo down to about three quarters of the icon size. Android browsers disagree on how a [maskable icon](https://web.dev/articles/maskable-icon) maps to an adaptive icon: Firefox pads it to align the safe zones, Chrome's WebAPK uses it as the adaptive layer directly, so the same icon renders about 1.3 times larger on Chrome than on Firefox. The scale is the geometric middle of both, which keeps the logo uncropped on Chrome and only slightly small on Firefox. Artwork that reaches the corners of the logo can still be clipped by round masks. A user-supplied `icon-only.png` is used as-is for the `any` icons and is inset on the `--iconBackgroundColor` for the maskable icons.
+- `icon-<size>.png` with `purpose: "any"` and `icon-maskable-<size>.png` with `purpose: "maskable"`, for the sizes 48, 72, 96, 128, 192, 256 and 512. In Easy Mode the logo is placed on `--iconBackgroundColor`, so the icons are opaque. A custom `icon-only.png` is used as is for the `any` icons. The maskable icons inset the artwork to about three quarters of the icon on `--iconBackgroundColor`, so it survives the launcher masks. Artwork that reaches the corners of the logo can still be clipped by round masks.
+- `apple-splash-<width>-<height>@<density>.png`: the iOS splash screens (`apple-touch-startup-image`) for a built-in list of iPhone and iPad screen sizes, based on the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and updated with new releases of this tool.
+- The manifest (`manifest.webmanifest`, or `manifest.json` if that is what exists) is created or updated with the icons and, when `--splashBackgroundColor` is given, with `background_color`. Use `--pwaManifestPath` to point at a specific file.
 
-Earlier versions wrote PNG data to `icon-<size>.webp` files. These files are removed from the manifest and deleted on the next run; files outside the `icons/` directory are never deleted. Update any references to them, for example `apple-touch-icon` links in your `index.html`.
+<details>
+<summary>Why three quarters for the maskable icons?</summary>
 
-### Splash screens
+Android browsers disagree on how a [maskable icon](https://web.dev/articles/maskable-icon) maps to an adaptive icon. Firefox pads it to align the safe zones, Chrome's WebAPK uses it as the adaptive layer directly, so the same icon renders about 1.3 times larger on Chrome than on Firefox. Three quarters is the geometric middle of both: the logo stays uncropped on Chrome and is only slightly small on Firefox.
 
-iOS splash screens (`apple-touch-startup-image`) are generated for a built-in list of iPhone and iPad screen sizes. The list is based on the device screen dimensions table of the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and is updated with new releases of this tool. Earlier versions fetched the sizes from the Apple website at runtime; this no longer works because Apple removed the table, so the fetch and the `--pwaNoAppleFetch` flag have no effect anymore.
+</details>
 
-### Help
+## Options
 
-See the help instructions on the command line with the `--help` flag.
+| Option                                 | Default                           | Description                                                                    |
+| -------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------ |
+| `--ios`, `--android`, `--pwa`          | every platform found              | Generate for the given platforms only.                                         |
+| `--assetPath <path>`                   | `assets`, then `resources`        | The folder with the source files.                                              |
+| `--iosProject <dir>`                   | `ios/App`                         | The iOS project.                                                               |
+| `--androidProject <dir>`               | `android`                         | The Android project.                                                           |
+| `--androidFlavor <name>`               | `main`                            | The Android product flavor the assets are written to (`app/src/<flavor>/res`). |
+| `--androidNotificationIconName <name>` | `ic_notification`                 | The resource name of the Android notification icon.                            |
+| `--pwaManifestPath <path>`             | found in `public`, `src` or `www` | The web app manifest file.                                                     |
+| `--verbose`                            |                                   | Verbose output.                                                                |
+
+Logo and colors:
+
+| Option                                | Default   | Description                                                                                                                 |
+| ------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--iconBackgroundColor <color>`       | `#ffffff` | The background color behind the logo on the icons, and behind custom icons where the platform needs an opaque icon.         |
+| `--iconBackgroundColorDark <color>`   | `#111111` | The background color for dark mode icons. Not used by any platform yet.                                                     |
+| `--splashBackgroundColor <color>`     | `#ffffff` | The background color of the splash screens generated from the logo. Also written to the PWA manifest as `background_color`. |
+| `--splashBackgroundColorDark <color>` | `#111111` | The background color of the dark mode splash screens generated from the logo.                                               |
+| `--logoSplashScale <scale>`           | `0.2`     | The width of the logo as a fraction of the 2732×2732px splash the splash screens are generated from.                        |
+| `--logoSplashTargetWidth <width>`     |           | The width of the logo in pixels on that splash. Takes precedence over `--logoSplashScale`.                                  |
+
+Colors are hex values. Quote them so your shell does not read `#` as a comment: `'#eeeeee'`.
+
+See the full list on the command line:
 
 ```shell
 npx @capawesome/capacitor-assets generate --help
 ```
+
+## Migrating from @capacitor/assets
+
+```shell
+npm uninstall @capacitor/assets
+npm install --save-dev @capawesome/capacitor-assets
+```
+
+Replace `@capacitor/assets` with `@capawesome/capacitor-assets` in your scripts. The source files and options are the same. What changed:
+
+- PWA icons are written as `icon-<size>.png` and `icon-maskable-<size>.png`, with separate `any` and `maskable` entries in the manifest. Earlier versions wrote PNG data to `icon-<size>.webp` files with a combined purpose. The old files are removed from the manifest and deleted from `icons/` on the next run. Update references to them, for example `apple-touch-icon` links in your `index.html`.
+- In Easy Mode, the logo is one fifth of the splash on every platform. Earlier versions scaled it by its own width on iOS and drew every Android density on its own.
+- `--pwaNoAppleFetch` has no effect. Apple removed the screen size table the tool used to fetch, so the sizes come from a built-in list.
+
+See the [changelog](https://github.com/capawesome-team/capacitor-assets/blob/main/CHANGELOG.md) for everything else that was added since the fork.
+
+## Contributing
+
+See [CONTRIBUTING.md](https://github.com/capawesome-team/capacitor-assets/blob/main/CONTRIBUTING.md).
+
+## License
+
+See [LICENSE](https://github.com/capawesome-team/capacitor-assets/blob/main/LICENSE).
