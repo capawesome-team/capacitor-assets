@@ -34,4 +34,6 @@ export interface AssetGeneratorOptions {
   androidFlavor?: string;
   // Resource name of the generated Android notification icon. Default: ic_notification
   androidNotificationIconName?: string;
+  // Android adaptive icon source scale, 0 to 1 of the layer. Default: 0.6667
+  androidIconScale?: number;
 }
