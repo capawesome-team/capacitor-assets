@@ -122,6 +122,16 @@ To tint the icon on Android 12 and later, optionally add the following to the `<
 <meta-data android:name="com.onesignal.NotificationAccentColor.DEFAULT" android:value="FF00FF00" />
 ```
 
+#### Android 12+ splash screen
+
+Android 12 and later draw the launch screen from the activity theme: one centred icon on a solid colour, not a full-screen image as on iOS. Until the theme points at an icon, the system shows the app's launcher icon, and `splash.png` only appears afterwards through the [Splash Screen plugin](https://capacitorjs.com/docs/apis/splash-screen). From `splash.png` and `splash-dark.png` (or `android/splash.png` and `android/splash-dark.png`), the tool therefore also:
+
+- writes `ic_splash.png` to `res/drawable[-night]-<density>/`: the middle 36% of the splash, 288dp square. Android masks it to a 192dp circle, so keep the logo inside the middle 24% of the splash.
+- writes `splash_background` to `res/values[-night]/colors.xml`: the colour of the splash's top-left pixel. Other colours in the file are kept.
+- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `res/values/styles.xml`.
+
+With the logo centred on a plain background, the launch screen then looks like the splash on iOS. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone.
+
 ## PWA Notes
 
 ### Manifest
