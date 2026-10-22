@@ -471,7 +471,10 @@ export class AndroidAssetGenerator extends AssetGenerator {
       this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenBackground', '@color/splash_background');
       this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenAnimatedIcon', '@drawable/ic_splash');
       // Capacitor's template also sets this. Below Android 12 it covers the icon with the full-screen splash.png.
-      styles.deleteNodes(`${theme}/item[@name="android:background"][text()="@drawable/splash"]`);
+      const background = `${theme}/item[@name="android:background"][text()="@drawable/splash"]`;
+      if (styles.find(background)?.length) {
+        styles.deleteNodes(background);
+      }
     } else {
       warn(
         `Style ${LAUNCH_THEME} with parent Theme.SplashScreen not found in ${join(this.getResDir(), 'values', 'styles.xml')}, not setting the Android 12+ splash screen theme. See the README.`,
