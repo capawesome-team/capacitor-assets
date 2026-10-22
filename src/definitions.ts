@@ -7,6 +7,7 @@ export interface Assets {
   iconForeground: InputAsset | null;
   iconBackground: InputAsset | null;
   iconMonochrome: InputAsset | null;
+  iconMaskable: InputAsset | null;
   splash: InputAsset | null;
   splashDark: InputAsset | null;
 
@@ -40,6 +41,7 @@ export const enum AssetKind {
   IconForeground = 'icon-foreground',
   IconBackground = 'icon-background',
   IconMonochrome = 'icon-monochrome',
+  IconMaskable = 'icon-maskable',
   NotificationIcon = 'notification-icon',
   Splash = 'splash',
   SplashDark = 'splash-dark',

@@ -40,7 +40,8 @@ Easy Mode generates everything from one logo. It is the recommended way: less wo
 assets/
 ├── logo.png
 ├── logo-dark.png
-└── icon-monochrome.png
+├── icon-monochrome.png
+└── icon-maskable.png
 ```
 
 | File                  | Minimum size | Notes                                                                                                |
@@ -48,6 +49,7 @@ assets/
 | `logo.(png\|svg)`     | 1024×1024px  | The logo. `icon.(png\|svg)` works as an alternative name.                                            |
 | `logo-dark.png`       | 1024×1024px  | Optional. The logo for the dark mode splash screens.                                                 |
 | `icon-monochrome.png` | 1024×1024px  | Optional. The monochrome layer for themed app icons on Android 13+, see [Custom Mode](#custom-mode). |
+| `icon-maskable.png`   | 512×512px    | Optional. The maskable PWA icon, see [Custom Mode](#custom-mode).                                    |
 
 The logo is placed on a background color for the icons and on another one for the splash screens. Pass your brand colors as options:
 
@@ -67,6 +69,7 @@ assets/
 ├── icon-foreground.png
 ├── icon-background.png
 ├── icon-monochrome.png
+├── icon-maskable.png
 ├── splash.png
 └── splash-dark.png
 ```
@@ -77,6 +80,7 @@ assets/
 | `icon-foreground.(png\|jpg)` | 1024×1024px  | The foreground layer of the Android adaptive icon.                                                                                                                                                                                                                                                                                                                          |
 | `icon-background.(png\|jpg)` | 1024×1024px  | The background layer of the Android adaptive icon.                                                                                                                                                                                                                                                                                                                          |
 | `icon-monochrome.(png\|jpg)` | 1024×1024px  | Optional. The monochrome layer for [themed app icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive) on Android 13+: a single-color shape on a transparent background that the system tints. Keep the same safe zone as the foreground. Needs the foreground and background layers (or a logo), because the launcher XML references all three. |
+| `icon-maskable.(png\|jpg)`   | 512×512px    | Optional. The PWA icon for the `maskable` manifest entries, used as is. Make it full-bleed with the artwork inside the central 80% circle, see [maskable icons](https://web.dev/articles/maskable-icon). Without it, the app icon is inset on `--iconBackgroundColor`.                                                                                                      |
 | `splash.(png\|jpg)`          | 2732×2732px  | The splash screen. Keep the artwork in the middle, the edges are cropped on most screens.                                                                                                                                                                                                                                                                                   |
 | `splash-dark.(png\|jpg)`     | 2732×2732px  | Optional. The splash screen for dark mode.                                                                                                                                                                                                                                                                                                                                  |
 
@@ -161,7 +165,7 @@ Then point your notification plugin at it:
 
 The web directory is `public`, `src` or `www`, whichever exists first. The images are written to its `assets/icons/` folder if the web directory has an `assets/` folder, otherwise to its `icons/` folder. The tool writes:
 
-- `icon-<size>.png` with `purpose: "any"` and `icon-maskable-<size>.png` with `purpose: "maskable"`, for the sizes 48, 72, 96, 128, 192, 256 and 512. In Easy Mode the logo is placed on `--iconBackgroundColor`, so the icons are opaque. A custom `icon-only.png` is used as is for the `any` icons. The maskable icons inset the artwork to about three quarters of the icon on `--iconBackgroundColor`, so it survives the launcher masks. Artwork that reaches the corners of the logo can still be clipped by round masks.
+- `icon-<size>.png` with `purpose: "any"` and `icon-maskable-<size>.png` with `purpose: "maskable"`, for the sizes 48, 72, 96, 128, 192, 256 and 512. In Easy Mode the logo is placed on `--iconBackgroundColor`, so the icons are opaque. A custom `icon-only.png` is used as is for the `any` icons. A custom `icon-maskable.png` is used as is for the `maskable` icons. Without it, the maskable icons inset the artwork to about three quarters of the icon on `--iconBackgroundColor`, so it survives the launcher masks; artwork that reaches the corners can still be clipped by round masks.
 - `apple-splash-<width>-<height>@<density>.png`: the iOS splash screens (`apple-touch-startup-image`) for a built-in list of iPhone and iPad screen sizes, based on the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and updated with new releases of this tool. In Easy Mode the logo is placed on `--splashBackgroundColor`, or on `--splashBackgroundColorDark` for dark mode.
 - The manifest (`manifest.webmanifest`, or `manifest.json` if that is what exists) is created or updated with the icons and, when `--splashBackgroundColor` is given, with `background_color`. Use `--pwaManifestPath` to point at a specific file.
 

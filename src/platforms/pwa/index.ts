@@ -62,8 +62,8 @@ export class PwaAssetGenerator extends AssetGenerator {
         return this.generateFromLogo(asset, project);
       case AssetKind.Icon:
         return this.generateIcons(asset, project);
-      // eslint-disable-next-line no-duplicate-case
-      case AssetKind.Icon:
+      case AssetKind.IconMaskable:
+        // Rendered together with the app icon, see generateIcons
         return [];
       case AssetKind.Splash:
       case AssetKind.SplashDark:
@@ -214,17 +214,19 @@ export class PwaAssetGenerator extends AssetGenerator {
   }
 
   private async generateIcons(asset: InputAsset, project: Project): Promise<OutputAsset[]> {
-    const pipe = asset.pipeline();
-
-    if (!pipe) {
-      throw new BadPipelineError('Sharp instance not created');
-    }
-
     const pwaDir = await this.getPWADirectory(project.directory ?? undefined);
     const icons = Object.values(PwaAssets).filter((a) => a.kind === AssetKind.Icon) as PwaOutputAssetTemplate[];
 
     const generatedAssets = await Promise.all(
       icons.map(async (icon) => {
+        // A custom maskable icon replaces the inset app icon for the maskable entries
+        const source = (icon.maskable && project.assets?.iconMaskable) || asset;
+        const pipe = source.pipeline();
+
+        if (!pipe) {
+          throw new BadPipelineError('Sharp instance not created');
+        }
+
         const destDir = join(await this.getPWAAssetsDirectory(pwaDir), PWA_ASSET_PATH);
         try {
           await mkdirp(destDir);
@@ -233,12 +235,12 @@ export class PwaAssetGenerator extends AssetGenerator {
         }
         const dest = join(destDir, icon.name);
 
-        const iconPipe = await this.renderIcon(asset, pipe.clone(), icon);
+        const iconPipe = await this.renderIcon(source, pipe.clone(), icon);
         const outputInfo = await iconPipe.png().toFile(dest);
 
         return new OutputAsset(
           icon,
-          asset,
+          source,
           project,
           {
             [icon.name]: dest,
@@ -255,15 +257,17 @@ export class PwaAssetGenerator extends AssetGenerator {
     return generatedAssets;
   }
 
-  // Logos are placed on the icon background color, a user-supplied icon is only resized.
-  // Maskable icons are always inset on the background color to fit the safe zone.
+  // A logo is placed on the icon background color, a custom icon is only resized. The maskable
+  // icons are inset on the background color to fit the safe zone, unless they come from a custom
+  // maskable icon, which is used as is.
   private async renderIcon(asset: InputAsset, pipe: Sharp, icon: PwaOutputAssetTemplate): Promise<Sharp> {
     const isLogo = asset.kind === AssetKind.Logo || asset.kind === AssetKind.LogoDark;
-    if (!isLogo && !icon.maskable) {
+    const inset = icon.maskable && asset.kind !== AssetKind.IconMaskable;
+    if (!isLogo && !inset) {
       return pipe.resize(icon.width, icon.height);
     }
 
-    const scale = icon.maskable ? MASKABLE_ICON_SCALE : 1;
+    const scale = inset ? MASKABLE_ICON_SCALE : 1;
     const resized = await pipe
       .resize(Math.round(icon.width * scale), Math.round(icon.height * scale))
       .png()
