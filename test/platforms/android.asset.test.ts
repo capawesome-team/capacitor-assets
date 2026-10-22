@@ -146,7 +146,7 @@ describe('Android asset test', () => {
         join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
         { encoding: 'utf-8' },
       );
-      expect(icLauncherXml).toContain('<monochrome>');
+      expect(icLauncherXml).toContain('<monochrome android:drawable="@mipmap/ic_launcher_monochrome" />');
     } finally {
       await move(join(assetDir, 'android', 'icon-monochrome.png'), join(assetDir, 'icon-monochrome.png'));
     }
@@ -164,8 +164,83 @@ describe('Android asset test', () => {
       join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
       { encoding: 'utf-8' },
     );
-    expect(icLauncherXml).toContain('<monochrome>');
+    expect(icLauncherXml).toContain('<monochrome android:drawable="@mipmap/ic_launcher_monochrome" />');
     expect(icLauncherXml).toContain('@mipmap/ic_launcher_monochrome');
+  });
+
+  // A 1024px source: one color, or blue on the left half and red on the right
+  async function layerSource(name: string, kind: AssetKind, split = false): Promise<InputAsset> {
+    const path = join(fixtureDir, `${name}.png`);
+    const half = await sharp({ create: { width: 512, height: 1024, channels: 4, background: '#0000ff' } })
+      .png()
+      .toBuffer();
+    await sharp({ create: { width: 1024, height: 1024, channels: 4, background: '#ff0000' } })
+      .composite(split ? [{ input: half, left: 0, top: 0 }] : [])
+      .png()
+      .toFile(path);
+    const asset = new InputAsset(path, kind, Platform.Any);
+    await asset.load();
+    return asset;
+  }
+
+  function xxxhdpiLayer(layer: string): string {
+    return join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-xxxhdpi', `ic_launcher_${layer}.png`);
+  }
+
+  async function pixel(path: string, left: number, top: number): Promise<string> {
+    return (await sharp(path).ensureAlpha().extract({ left, top, width: 1, height: 1 }).raw().toBuffer()).toString(
+      'hex',
+    );
+  }
+
+  it('Should reference the adaptive icon layers without an inset', async () => {
+    await assets.iconForeground?.generate(new AndroidAssetGenerator(), ctx.project);
+
+    const icLauncherXml = await readFile(
+      join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
+      { encoding: 'utf-8' },
+    );
+    expect(icLauncherXml).not.toContain('<inset');
+    expect(icLauncherXml).toContain('<background android:drawable="@mipmap/ic_launcher_background" />');
+    expect(icLauncherXml).toContain('<foreground android:drawable="@mipmap/ic_launcher_foreground" />');
+  });
+
+  it('Should draw the foreground on two thirds of the layer by default', async () => {
+    const foreground = await layerSource('layer-foreground', AssetKind.IconForeground);
+    await foreground.generate(new AndroidAssetGenerator(), ctx.project);
+
+    // 432px at xxxhdpi: the source takes the middle 288px, which the launcher mask shows
+    const path = xxxhdpiLayer('foreground');
+    const drawn = await sharp(path).trim().toBuffer({ resolveWithObject: true });
+    expect([drawn.info.width, drawn.info.height]).toEqual([288, 288]);
+    expect(await pixel(path, 0, 0)).toBe('00000000');
+    expect(await pixel(path, 216, 216)).toBe('ff0000ff');
+  });
+
+  it('Should cover the whole background layer', async () => {
+    const background = await layerSource('layer-background', AssetKind.IconBackground, true);
+    await background.generate(new AndroidAssetGenerator(), ctx.project);
+
+    // Edge pixels fill the margin around the source
+    const path = xxxhdpiLayer('background');
+    expect(await pixel(path, 0, 0)).toBe('0000ffff');
+    expect(await pixel(path, 0, 431)).toBe('0000ffff');
+    expect(await pixel(path, 431, 0)).toBe('ff0000ff');
+    expect(await pixel(path, 431, 431)).toBe('ff0000ff');
+    expect(await pixel(path, 214, 216)).toBe('0000ffff');
+    expect(await pixel(path, 217, 216)).toBe('ff0000ff');
+  });
+
+  it('Should scale the adaptive icon layers by androidAdaptiveIconScale', async () => {
+    const foreground = await layerSource('layer-foreground', AssetKind.IconForeground);
+    const path = xxxhdpiLayer('foreground');
+
+    await foreground.generate(new AndroidAssetGenerator({ androidAdaptiveIconScale: 0.5 }), ctx.project);
+    const half = await sharp(path).trim().toBuffer({ resolveWithObject: true });
+    expect([half.info.width, half.info.height]).toEqual([216, 216]);
+
+    await foreground.generate(new AndroidAssetGenerator({ androidAdaptiveIconScale: 1 }), ctx.project);
+    expect(await pixel(path, 0, 0)).toBe('ff0000ff');
   });
 
   it('Should generate android splashes', async () => {
@@ -339,7 +414,7 @@ describe('Android Asset Test - Logo Only', () => {
       join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', 'ic_launcher.xml'),
       { encoding: 'utf-8' },
     );
-    expect(icLauncherXml).not.toContain('<monochrome>');
+    expect(icLauncherXml).not.toContain('<monochrome');
   });
 
   it('Should generate icons and splashes from logo-dark', async () => {

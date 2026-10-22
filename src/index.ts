@@ -37,6 +37,14 @@ function parseIntOption(value: string) {
   return parsedValue;
 }
 
+function parseScaleOption(value: string) {
+  const parsedValue = parseFloat(value);
+  if (!(parsedValue > 0 && parsedValue <= 1)) {
+    throw new InvalidArgumentError('Not a number from 0 to 1.');
+  }
+  return parsedValue;
+}
+
 function parseResourceNameOption(value: string) {
   if (!/^[a-z][a-z0-9_]*$/.test(value)) {
     throw new InvalidArgumentError(
@@ -96,6 +104,11 @@ export function runProgram(ctx: Context): void {
       '--androidNotificationIconName <name>',
       'Resource name of the generated Android notification icon. Defaults to "ic_notification".',
       parseResourceNameOption,
+    )
+    .option(
+      '--androidAdaptiveIconScale <scale>',
+      'Android adaptive icon source scale, 0 to 1 of the layer. Defaults to 0.6667.',
+      parseScaleOption,
     )
     .option('--iosProject <dir>', 'Path to iOS project (defaults to "ios/App")')
     .option('--androidProject <dir>', 'Path to Android project (defaults to "android")')

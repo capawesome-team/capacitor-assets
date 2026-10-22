@@ -31,6 +31,9 @@ const SPLASH_ICON_DP = 288;
 const SPLASH_ICON_CROP = 0.36;
 const SPLASH_ICON_SCALES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 
+// 72dp of the 108dp adaptive icon layer
+const ADAPTIVE_ICON_SCALE = 0.6667;
+
 // The theme of the launch activity in the Capacitor template
 const LAUNCH_THEME = 'AppTheme.NoActionBarLaunch';
 const EMPTY_RESOURCES_XML = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
@@ -328,7 +331,25 @@ export class AndroidAssetGenerator extends AssetGenerator {
       await mkdirp(parentDir);
     }
 
-    const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
+    // Full bleed, with no inset in ic_launcher.xml: InsetDrawable rounds the inset down, which left a black
+    // line on the bottom and right edges at some launcher sizes. The background repeats its edge pixels.
+    const scale = this.options.androidAdaptiveIconScale ?? ADAPTIVE_ICON_SCALE;
+    const width = Math.round(icon.width * scale);
+    const height = Math.round(icon.height * scale);
+    const left = Math.floor((icon.width - width) / 2);
+    const top = Math.floor((icon.height - height) / 2);
+    const outputInfo = await pipe
+      .resize(width, height)
+      .ensureAlpha()
+      .extend({
+        top,
+        bottom: icon.height - height - top,
+        left,
+        right: icon.width - width - left,
+        ...(layer === 'background' ? { extendWith: 'copy' } : { background: { r: 0, g: 0, b: 0, alpha: 0 } }),
+      })
+      .png()
+      .toFile(dest);
 
     const xmlFiles = await this.writeAdaptiveIconXml(project);
 
@@ -344,20 +365,14 @@ export class AndroidAssetGenerator extends AssetGenerator {
     const monochrome =
       project.assets?.iconMonochrome || project.assets?.androidIconMonochrome
         ? `
-    <monochrome>
-        <inset android:drawable="@mipmap/ic_launcher_monochrome" android:inset="16.7%" />
-    </monochrome>`
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />`
         : '';
 
     const icLauncherXml = `
 <?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background>
-        <inset android:drawable="@mipmap/ic_launcher_background" android:inset="16.7%" />
-    </background>
-    <foreground>
-        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
-    </foreground>${monochrome}
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />${monochrome}
 </adaptive-icon>
     `.trim();
 
