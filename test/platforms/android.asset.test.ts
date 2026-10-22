@@ -1,4 +1,4 @@
-import { copy, move, pathExists, readdirp, readFile, rmSync as rm, statSync } from '@ionic/utils-fs';
+import { copy, move, pathExists, readdirp, readFile, rmSync as rm, statSync, writeFile } from '@ionic/utils-fs';
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import sharp from 'sharp';
@@ -181,7 +181,7 @@ describe('Android asset test', () => {
     await verifySizes(generatedAssets as OutputAsset<AndroidOutputAssetTemplate>[]);
   });
 
-  it('Should generate the Android 12+ splash icon and background colour', async () => {
+  it('Should generate the Android 12+ splash icon and colour and set the launch theme', async () => {
     const strategy = new AndroidAssetGenerator();
     const res = join(fixtureDir, 'android', 'app', 'src', 'main', 'res');
 
@@ -195,9 +195,37 @@ describe('Android asset test', () => {
       expect([icon.width, icon.height]).toEqual([1152, 1152]);
 
       const pixel = await sharp(splash!.path).extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
-      const xml = await readFile(join(res, `values${night}`, 'colors.xml'), { encoding: 'utf-8' });
-      expect(xml.match(/splash_background/g)).toHaveLength(1);
-      expect(xml).toContain(`<color name="splash_background">#${pixel.toString('hex').toUpperCase()}</color>`);
+      const colors = await readFile(join(res, `values${night}`, 'colors.xml'), { encoding: 'utf-8' });
+      expect(colors.match(/splash_background/g)).toHaveLength(1);
+      expect(colors).toContain(`<color name="splash_background">#${pixel.toString('hex').toUpperCase()}</color>`);
+
+      const styles = await readFile(join(res, 'values', 'styles.xml'), { encoding: 'utf-8' });
+      expect(styles.match(/windowSplashScreenAnimatedIcon/g)).toHaveLength(1);
+      expect(styles).toContain('<item name="windowSplashScreenBackground">@color/splash_background</item>');
+      expect(styles).toContain('<item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>');
+    }
+  });
+
+  it('Should leave a launch theme that does not extend Theme.SplashScreen alone', async () => {
+    const stylesPath = join(fixtureDir, 'android', 'app', 'src', 'main', 'res', 'values', 'styles.xml');
+    const styles = await readFile(stylesPath, { encoding: 'utf-8' });
+    await writeFile(
+      stylesPath,
+      `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>
+`,
+    );
+
+    try {
+      await assets.splash?.generate(new AndroidAssetGenerator(), ctx.project);
+
+      expect(await readFile(stylesPath, { encoding: 'utf-8' })).not.toContain('windowSplashScreen');
+    } finally {
+      await writeFile(stylesPath, styles);
     }
   });
 

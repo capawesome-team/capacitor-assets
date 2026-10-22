@@ -1,4 +1,5 @@
-import { mkdirp, pathExists, readFile, writeFile } from '@ionic/utils-fs';
+import { mkdirp, pathExists, writeFile } from '@ionic/utils-fs';
+import type { XmlFile } from '@trapezedev/project';
 import { dirname, join, relative } from 'path';
 import type { OutputInfo, Sharp } from 'sharp';
 import sharp from 'sharp';
@@ -25,6 +26,10 @@ type AdaptiveIconLayer = 'foreground' | 'background' | 'monochrome';
 const SPLASH_ICON_DP = 288;
 const SPLASH_ICON_CROP = 0.36;
 const SPLASH_ICON_SCALES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+
+// The theme of the launch activity in the Capacitor template
+const LAUNCH_THEME = 'AppTheme.NoActionBarLaunch';
+const EMPTY_RESOURCES_XML = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
 
 export class AndroidAssetGenerator extends AssetGenerator {
   constructor(options: AssetGeneratorOptions = {}) {
@@ -436,7 +441,7 @@ export class AndroidAssetGenerator extends AssetGenerator {
     }
 
     // Before the splashes below resize the pipeline
-    await this.writeSplashBackground(project, asset.kind, pipe.clone());
+    await this.writeSplashTheme(project, asset.kind, pipe.clone());
 
     const splashes = (
       asset.kind === AssetKind.Splash
@@ -490,24 +495,53 @@ export class AndroidAssetGenerator extends AssetGenerator {
   }
 
   /**
-   * windowSplashScreenBackground takes a colour, not a drawable: write the
-   * splash's top-left pixel as splash_background in values{,-night}/colors.xml.
+   * Android 12+ draws the launch screen from the theme: a colour and an icon, not
+   * a drawable. Writes the splash's top-left pixel as splash_background in
+   * values{,-night}/colors.xml and points the launch theme at it and at ic_splash.
    */
-  private async writeSplashBackground(project: Project, kind: AssetKind, pipe: Sharp): Promise<void> {
-    const dir = join(this.getResPath(project), kind === AssetKind.SplashDark ? 'values-night' : 'values');
-    const file = join(dir, 'colors.xml');
-
+  private async writeSplashTheme(project: Project, kind: AssetKind, pipe: Sharp): Promise<void> {
     const pixel = await pipe.extract({ left: 0, top: 0, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
-    const entry = `<color name="splash_background">#${pixel.toString('hex').toUpperCase()}</color>`;
+    const color = `#${pixel.toString('hex').toUpperCase()}`;
 
-    let xml = (await pathExists(file))
-      ? await readFile(file, { encoding: 'utf-8' })
-      : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
-    const existing = /<color name="splash_background">[^<]*<\/color>/;
-    xml = existing.test(xml) ? xml.replace(existing, entry) : xml.replace('</resources>', `    ${entry}\n</resources>`);
+    const valuesDir = kind === AssetKind.SplashDark ? 'values-night' : 'values';
+    const colors = await this.loadResourceXml(project, join(valuesDir, 'colors.xml'));
+    this.setNamedXmlChild(colors, 'resources', 'color', 'splash_background', color);
 
-    await mkdirp(dir);
-    await writeFile(file, xml);
+    const styles = await this.loadResourceXml(project, join('values', 'styles.xml'));
+    const theme = `resources/style[@name="${LAUNCH_THEME}"]`;
+    if (styles.find(theme)?.[0]?.getAttribute('parent') === 'Theme.SplashScreen') {
+      this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenBackground', '@color/splash_background');
+      this.setNamedXmlChild(styles, theme, 'item', 'windowSplashScreenAnimatedIcon', '@drawable/ic_splash');
+    } else {
+      warn(
+        `Style ${LAUNCH_THEME} with parent Theme.SplashScreen not found in ${join(this.getResDir(), 'values', 'styles.xml')}, not setting the Android 12+ splash screen theme. See the README.`,
+      );
+    }
+
+    await project.commit();
+  }
+
+  private async loadResourceXml(project: Project, relPath: string): Promise<XmlFile> {
+    const path = join(this.getResPath(project), relPath);
+    if (!(await pathExists(path))) {
+      await mkdirp(dirname(path));
+      await writeFile(path, EMPTY_RESOURCES_XML);
+    }
+
+    const file = project.android!.getXmlFile(join(this.getResDir(), relPath))!;
+    await file.load();
+    return file;
+  }
+
+  // Sets <tag name="…">value</tag> under the parent, replacing an existing one
+  private setNamedXmlChild(file: XmlFile, parent: string, tag: string, name: string, value: string): void {
+    const fragment = `<${tag} name="${name}">${value}</${tag}>`;
+    const existing = `${parent}/${tag}[@name="${name}"]`;
+    if (file.find(existing)?.length) {
+      file.replaceFragment(existing, fragment);
+    } else {
+      file.injectFragment(parent, fragment);
+    }
   }
 
   private async generateSplash(
@@ -560,6 +594,10 @@ export class AndroidAssetGenerator extends AssetGenerator {
   }
 
   private getResPath(project: Project): string {
-    return join(project.config.android!.path!, 'app', 'src', this.options.androidFlavor ?? 'main', 'res');
+    return join(project.config.android!.path!, this.getResDir());
+  }
+
+  private getResDir(): string {
+    return join('app', 'src', this.options.androidFlavor ?? 'main', 'res');
   }
 }
