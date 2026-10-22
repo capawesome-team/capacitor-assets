@@ -27,4 +27,6 @@ export interface AssetGeneratorOptions {
   logoSplashTargetWidth?: number;
   // Android product flavor name where generated assets will be created. Default: main
   androidFlavor?: string;
+  // Resource name of the generated Android notification icon. Default: ic_notification
+  androidNotificationIconName?: string;
 }

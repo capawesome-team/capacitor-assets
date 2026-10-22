@@ -44,6 +44,7 @@ Where the provided flags are:
 
 - `--iosProject` - the path to the iOS project (default `ios/App`)
 - `--androidProject` - the path to the Android project (default `android`)
+- `--androidNotificationIconName` - the resource name of the generated Android notification icon (default `ic_notification`, see [Android notification icon](#android-notification-icon))
 - `--assetPath <path>` - Path to the assets directory for your project. By default will check `"assets"` and `"resources"` directories, in that order.
 - `--iconBackgroundColor` - the background color (hex value) used when generating icon layers for light mode (default `#ffffff`)
 - `--iconBackgroundColorDark` - the background color (hex value) used when generating icon layers for dark mode (where supported) (default `#111111`)
@@ -98,7 +99,7 @@ Otherwise `@capawesome/capacitor-assets` will use all detected Capacitor platfor
 
 #### Android notification icon
 
-If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
+If `assets/android/notification-icon.png` exists, the tool generates `ic_notification.png` in each `res/drawable-<density>/` folder of your Android project, at 24, 36, 48, 72 and 96px. Use `--androidNotificationIconName` to give it another name. Android only renders the alpha channel of this icon, so use white pixels on a transparent background.
 
 To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/apis/push-notifications) or [`@capacitor-firebase/messaging`](https://capawesome.io/docs/sdks/capacitor/firebase/cloud-messaging/), add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml`:
 
@@ -108,12 +109,10 @@ To use it with [`@capacitor/push-notifications`](https://capacitorjs.com/docs/ap
 
 To use it with [`@capacitor/local-notifications`](https://capacitorjs.com/docs/apis/local-notifications), set `smallIcon` to `ic_notification` in the plugin configuration.
 
-To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Rename the generated files after each run:
+To use it with [`@onesignal/capacitor-plugin`](https://documentation.onesignal.com/docs/notification-icons#how-to-add-android-default-icons), no manifest entry or plugin option points to the icon: OneSignal looks for a drawable named `ic_stat_onesignal_default`. Generate the icon under that name:
 
 ```shell
-for f in android/app/src/main/res/drawable-*/ic_notification.png; do
-  mv "$f" "$(dirname "$f")/ic_stat_onesignal_default.png"
-done
+npx @capawesome/capacitor-assets generate --androidNotificationIconName ic_stat_onesignal_default
 ```
 
 To tint the icon on Android 12 and later, optionally add the following to the `<application>` element of `android/app/src/main/AndroidManifest.xml` (ARGB hex without `#`):

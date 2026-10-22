@@ -37,6 +37,15 @@ function parseIntOption(value: string) {
   return parsedValue;
 }
 
+function parseResourceNameOption(value: string) {
+  if (!/^[a-z][a-z0-9_]*$/.test(value)) {
+    throw new InvalidArgumentError(
+      'Not a valid Android resource name: use lowercase letters, digits and underscores, starting with a letter.',
+    );
+  }
+  return value;
+}
+
 export function runProgram(ctx: Context): void {
   // program.version(env.package.version);
   const program = new Command();
@@ -82,6 +91,11 @@ export function runProgram(ctx: Context): void {
     .option(
       '--androidFlavor <name>',
       'Android product flavor name where generated assets will be created. Defaults to "main".',
+    )
+    .option(
+      '--androidNotificationIconName <name>',
+      'Resource name of the generated Android notification icon. Defaults to "ic_notification".',
+      parseResourceNameOption,
     )
     .option('--iosProject <dir>', 'Path to iOS project (defaults to "ios/App")')
     .option('--androidProject <dir>', 'Path to Android project (defaults to "android")')
