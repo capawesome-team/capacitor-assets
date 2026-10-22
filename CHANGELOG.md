@@ -1,5 +1,28 @@
 # @capawesome/capacitor-assets
 
+## [5.0.0](https://github.com/capawesome-team/capacitor-assets/compare/v4.1.1...v5.0.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Easy Mode splash screens change size. On iOS the logo is now 20% of the splash instead of 20% of its own width. On Android every splash is cut from the same 2732x2732px image as on iOS, so the logo is no longer 20% of each splash's own width, and --logoSplashTargetWidth is the width on that image, not on every density. Transparent logos now get legacy launcher icons on --iconBackgroundColor.
+* **pwa:** PWA icons are now named `icon-<size>.png` instead of `icon-<size>.webp`. The old files are deleted on the next run; update any references to them, e.g. `apple-touch-icon` links in `index.html`.
+
+### Features
+
+* **android:** add an option to name the notification icon ([#16](https://github.com/capawesome-team/capacitor-assets/issues/16)) ([61d66a9](https://github.com/capawesome-team/capacitor-assets/commit/61d66a913591bdc90d78a3e7d7483caa3f5f5549))
+* **android:** generate the Android 12+ splash icon and background colour ([#18](https://github.com/capawesome-team/capacitor-assets/issues/18)) ([fb2e4ec](https://github.com/capawesome-team/capacitor-assets/commit/fb2e4ec6204abf443e84e02743e7d9c5d1098f05))
+* draw Easy Mode splashes like iOS and scale the logo to the splash ([#19](https://github.com/capawesome-team/capacitor-assets/issues/19)) ([9c0044d](https://github.com/capawesome-team/capacitor-assets/commit/9c0044d3f2e962d47c4777a013c59582e256350f))
+* **pwa:** support a custom maskable icon ([#24](https://github.com/capawesome-team/capacitor-assets/issues/24)) ([343feb1](https://github.com/capawesome-team/capacitor-assets/commit/343feb1de71a01561bbc63968a45c1c9a4641407))
+
+
+### Bug Fixes
+
+* **android:** read android/ icon layers as adaptive icon layers ([#17](https://github.com/capawesome-team/capacitor-assets/issues/17)) ([dc9ba9c](https://github.com/capawesome-team/capacitor-assets/commit/dc9ba9cee949ec7e55512d749622a9e6c2ab16d0))
+* **pwa:** generate opaque png icons with separate maskable variants ([#13](https://github.com/capawesome-team/capacitor-assets/issues/13)) ([961338d](https://github.com/capawesome-team/capacitor-assets/commit/961338d1fc5a9782033cc80debabbfef6b25745a))
+* **pwa:** use the splash background colors for the splash screens generated from the logo ([#23](https://github.com/capawesome-team/capacitor-assets/issues/23)) ([f2049f2](https://github.com/capawesome-team/capacitor-assets/commit/f2049f280eeb4d233fc0314c69d74d0a39b3bf09))
+* **pwa:** write the images into the web directory when it has no assets folder ([#22](https://github.com/capawesome-team/capacitor-assets/issues/22)) ([497a32e](https://github.com/capawesome-team/capacitor-assets/commit/497a32e91d077278d430d1301b30b775e9c13261))
+
 ## [4.1.1](https://github.com/capawesome-team/capacitor-assets/compare/v4.1.0...v4.1.1) (2026-10-17)
 
 
