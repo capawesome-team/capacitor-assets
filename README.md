@@ -131,7 +131,7 @@ Android 12 and later draw the launch screen from the activity theme: one centere
 
 - writes `drawable[-night]-<density>/ic_splash.png`: the middle 36% of the splash as a 288dp square. Android masks it to a 192dp circle, so keep the artwork inside the middle 24% of the splash. In Easy Mode, keep `--logoSplashScale` at or below `0.24`, or `--logoSplashTargetWidth` at or below `655`.
 - writes the color `splash_background` to `values[-night]/colors.xml`: the color of the top-left pixel of the splash. Other colors in the file are kept.
-- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `values/styles.xml`. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone.
+- sets `windowSplashScreenBackground` and `windowSplashScreenAnimatedIcon` on the `AppTheme.NoActionBarLaunch` style in `values/styles.xml`, and removes its `android:background` item if it is `@drawable/splash`: below Android 12 it covers the icon with the full-screen splash. The style must extend `Theme.SplashScreen`, which it does since Capacitor 4. If it does not, the tool prints a warning and leaves `styles.xml` alone.
 
 With the logo centered on a plain background, the launch screen then looks like the splash screen on iOS.
 
