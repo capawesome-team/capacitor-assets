@@ -166,3 +166,31 @@ describe('PWA Asset Test - logo only', () => {
     await verifySizes(generated as OutputAsset<PwaOutputAssetTemplate>[]);
   });
 });
+
+describe('PWA Asset Test - web directory without assets folder', () => {
+  let ctx: Context;
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'capacitor-assets-'));
+
+  beforeAll(async () => {
+    await copy('test/fixtures/app-logo-only', fixtureDir);
+    await rm(join(fixtureDir, 'public', 'assets'), { force: true, recursive: true });
+  });
+
+  beforeEach(async () => {
+    ctx = await loadContext(fixtureDir);
+  });
+
+  afterAll(async () => {
+    await rm(fixtureDir, { force: true, recursive: true });
+  });
+
+  it('Should write the images into the web directory', async () => {
+    const assets = await ctx.project.loadInputAssets();
+    await assets.logo!.generate(new PwaAssetGenerator(), ctx.project);
+
+    expect(await pathExists(join(fixtureDir, 'public', 'icons', 'icon-512.png'))).toBe(true);
+
+    const manifest = await readJSON(join(fixtureDir, 'public', 'manifest.webmanifest'));
+    expect(manifest.icons.map((icon: any) => icon.src)).toContain('icons/icon-512.png');
+  });
+});

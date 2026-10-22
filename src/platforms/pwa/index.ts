@@ -293,11 +293,10 @@ export class PwaAssetGenerator extends AssetGenerator {
     }
   }
 
-  private async getPWAAssetsDirectory(pwaDir?: string): Promise<string> {
-    if (await pathExists(join(pwaDir ?? '', 'assets'))) {
-      return join(pwaDir ?? '', 'assets');
-    }
-    return '';
+  // The images go to the web directory's assets folder if it has one, so they are deployed with the app
+  private async getPWAAssetsDirectory(pwaDir: string): Promise<string> {
+    const assetsDir = join(pwaDir, 'assets');
+    return (await pathExists(assetsDir)) ? assetsDir : pwaDir;
   }
 
   private async getManifestJsonPath(projectRoot?: string): Promise<string> {
