@@ -162,7 +162,7 @@ Then point your notification plugin at it:
 The web directory is `public`, `src` or `www`, whichever exists first. The images are written to its `assets/icons/` folder if the web directory has an `assets/` folder, otherwise to `icons/` in the project root, which is outside the deployed files. Create `assets/` in the web directory to keep the images deployable. The tool writes:
 
 - `icon-<size>.png` with `purpose: "any"` and `icon-maskable-<size>.png` with `purpose: "maskable"`, for the sizes 48, 72, 96, 128, 192, 256 and 512. In Easy Mode the logo is placed on `--iconBackgroundColor`, so the icons are opaque. A custom `icon-only.png` is used as is for the `any` icons. The maskable icons inset the artwork to about three quarters of the icon on `--iconBackgroundColor`, so it survives the launcher masks. Artwork that reaches the corners of the logo can still be clipped by round masks.
-- `apple-splash-<width>-<height>@<density>.png`: the iOS splash screens (`apple-touch-startup-image`) for a built-in list of iPhone and iPad screen sizes, based on the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and updated with new releases of this tool. In Easy Mode the logo is placed on white, or on `#111111` for dark mode; the `--splashBackgroundColor` options do not apply here.
+- `apple-splash-<width>-<height>@<density>.png`: the iOS splash screens (`apple-touch-startup-image`) for a built-in list of iPhone and iPad screen sizes, based on the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and updated with new releases of this tool. In Easy Mode the logo is placed on `--splashBackgroundColor`, or on `--splashBackgroundColorDark` for dark mode.
 - The manifest (`manifest.webmanifest`, or `manifest.json` if that is what exists) is created or updated with the icons and, when `--splashBackgroundColor` is given, with `background_color`. Use `--pwaManifestPath` to point at a specific file.
 
 <details>
@@ -187,14 +187,14 @@ Android browsers disagree on how a [maskable icon](https://web.dev/articles/mask
 
 Logo and colors:
 
-| Option                                | Default   | Description                                                                                                                                                                                |
-| ------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--iconBackgroundColor <color>`       | `#ffffff` | The background color behind the logo on the icons, and behind custom icons where the platform needs an opaque icon.                                                                        |
-| `--iconBackgroundColorDark <color>`   | `#111111` | The background color for dark mode icons. Not used by any platform yet.                                                                                                                    |
-| `--splashBackgroundColor <color>`     | `#ffffff` | The background color of the iOS and Android splash screens generated from the logo. Also written to the PWA manifest as `background_color`; the PWA splash images keep a white background. |
-| `--splashBackgroundColorDark <color>` | `#111111` | The background color of the iOS and Android dark mode splash screens generated from the logo. The PWA splash images keep `#111111`.                                                        |
-| `--logoSplashScale <scale>`           | `0.2`     | The width of the logo as a fraction of the 2732×2732px splash the splash screens are generated from.                                                                                       |
-| `--logoSplashTargetWidth <width>`     |           | The width of the logo in pixels on that splash. Takes precedence over `--logoSplashScale`.                                                                                                 |
+| Option                                | Default   | Description                                                                                                                 |
+| ------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--iconBackgroundColor <color>`       | `#ffffff` | The background color behind the logo on the icons, and behind custom icons where the platform needs an opaque icon.         |
+| `--iconBackgroundColorDark <color>`   | `#111111` | The background color for dark mode icons. Not used by any platform yet.                                                     |
+| `--splashBackgroundColor <color>`     | `#ffffff` | The background color of the splash screens generated from the logo. Also written to the PWA manifest as `background_color`. |
+| `--splashBackgroundColorDark <color>` | `#111111` | The background color of the dark mode splash screens generated from the logo.                                               |
+| `--logoSplashScale <scale>`           | `0.2`     | The width of the logo as a fraction of the 2732×2732px splash the splash screens are generated from.                        |
+| `--logoSplashTargetWidth <width>`     |           | The width of the logo in pixels on that splash. Takes precedence over `--logoSplashScale`.                                  |
 
 Colors are hex values. Quote them so your shell does not read `#` as a comment: `'#eeeeee'`.
 

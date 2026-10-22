@@ -146,6 +146,26 @@ describe('PWA Asset Test - logo only', () => {
     expect(await pixelAt('icon-maskable-512.png', 256, 256)).not.toEqual([0x96, 0x26, 0x46, 255]);
   });
 
+  it('Should place the logo on the splash background colors', async () => {
+    const assets = await ctx.project.loadInputAssets();
+
+    const strategy = new PwaAssetGenerator({
+      splashBackgroundColor: '#962646',
+      splashBackgroundColorDark: '#122140',
+    });
+
+    const generated = (await assets.logo!.generate(strategy, ctx.project)) as OutputAsset<PwaOutputAssetTemplate>[];
+
+    const cornerOf = async (kind: AssetKind) => {
+      const splash = generated.find((asset) => asset.template.kind === kind)!;
+      const { data, info } = await sharp(Object.values(splash.destFilenames)[0]).raw().toBuffer({ resolveWithObject: true });
+      return Array.from(data.subarray(0, info.channels));
+    };
+
+    expect(await cornerOf(AssetKind.Splash)).toEqual([0x96, 0x26, 0x46, 255]);
+    expect(await cornerOf(AssetKind.SplashDark)).toEqual([0x12, 0x21, 0x40, 255]);
+  });
+
   it('Should update manifest with generated assets and colors from logo', async () => {
     const assets = await ctx.project.loadInputAssets();
 
