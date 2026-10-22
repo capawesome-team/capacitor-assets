@@ -205,6 +205,8 @@ describe('Android asset test', () => {
       expect(styles.match(/windowSplashScreenAnimatedIcon/g)).toHaveLength(1);
       expect(styles).toContain('<item name="windowSplashScreenBackground">@color/splash_background</item>');
       expect(styles).toContain('<item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>');
+      expect(styles).not.toContain('@drawable/splash<');
+      expect(styles).toContain('<item name="android:background">@null</item>');
     }
   });
 
