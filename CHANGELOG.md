@@ -1,5 +1,13 @@
 # @capawesome/capacitor-assets
 
+## [5.0.1](https://github.com/capawesome-team/capacitor-assets/compare/v5.0.0...v5.0.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **android:** draw adaptive icon layers full bleed and add --androidAdaptiveIconScale ([#25](https://github.com/capawesome-team/capacitor-assets/issues/25)) ([f98b04b](https://github.com/capawesome-team/capacitor-assets/commit/f98b04bad3776d40ae2857b769ea731d3b4a3fc1))
+* **android:** remove the template's android:background from the launch theme ([#26](https://github.com/capawesome-team/capacitor-assets/issues/26)) ([9672fe2](https://github.com/capawesome-team/capacitor-assets/commit/9672fe2b35280569fecd92ab85718c259208ada7))
+
 ## [5.0.0](https://github.com/capawesome-team/capacitor-assets/compare/v4.1.1...v5.0.0) (2026-10-22)
 
 
