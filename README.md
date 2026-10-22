@@ -159,7 +159,7 @@ Then point your notification plugin at it:
 
 ### PWA
 
-The web directory is `public`, `src` or `www`, whichever exists first. The images are written to its `assets/icons/` folder if the web directory has an `assets/` folder, otherwise to `icons/` in the project root, which is outside the deployed files. Create `assets/` in the web directory to keep the images deployable. The tool writes:
+The web directory is `public`, `src` or `www`, whichever exists first. The images are written to its `assets/icons/` folder if the web directory has an `assets/` folder, otherwise to its `icons/` folder. The tool writes:
 
 - `icon-<size>.png` with `purpose: "any"` and `icon-maskable-<size>.png` with `purpose: "maskable"`, for the sizes 48, 72, 96, 128, 192, 256 and 512. In Easy Mode the logo is placed on `--iconBackgroundColor`, so the icons are opaque. A custom `icon-only.png` is used as is for the `any` icons. The maskable icons inset the artwork to about three quarters of the icon on `--iconBackgroundColor`, so it survives the launcher masks. Artwork that reaches the corners of the logo can still be clipped by round masks.
 - `apple-splash-<width>-<height>@<density>.png`: the iOS splash screens (`apple-touch-startup-image`) for a built-in list of iPhone and iPad screen sizes, based on the [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/layout) and updated with new releases of this tool. In Easy Mode the logo is placed on white, or on `#111111` for dark mode; the `--splashBackgroundColor` options do not apply here.
