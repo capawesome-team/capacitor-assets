@@ -17,6 +17,12 @@ import { ASSETS as PwaAssets, PWA_IOS_DEVICE_SIZES } from './assets';
 
 export const PWA_ASSET_PATH = 'icons';
 
+// Android browsers disagree on how a maskable icon maps to an adaptive icon layer: Firefox pads it by
+// (4 / 5) / (66 / 108) to align the safe zones, while Chrome's WebAPK uses it as the layer directly. The logo
+// takes the geometric middle of the Android adaptive icon scale (0.666) and that scale times the padding
+// factor, so it renders slightly small on Firefox and slightly large on Chrome instead of cropped on one.
+const MASKABLE_ICON_SCALE = 0.666 * Math.sqrt(4 / 5 / (66 / 108));
+
 export interface ManifestIcon {
   src: string;
   size?: string | number;
@@ -230,7 +236,8 @@ export class PwaAssetGenerator extends AssetGenerator {
         }
         const dest = join(destDir, icon.name);
 
-        const outputInfo = await pipe.resize(icon.width, icon.height).png().toFile(dest);
+        const iconPipe = await this.renderIcon(asset, pipe.clone(), icon);
+        const outputInfo = await iconPipe.png().toFile(dest);
 
         return new OutputAsset(
           icon,
@@ -249,6 +256,30 @@ export class PwaAssetGenerator extends AssetGenerator {
     await this.updateManifest(project, generatedAssets);
 
     return generatedAssets;
+  }
+
+  // Logos are placed on the icon background color, a user-supplied icon is only resized.
+  // Maskable icons are always inset on the background color to fit the safe zone.
+  private async renderIcon(asset: InputAsset, pipe: Sharp, icon: PwaOutputAssetTemplate): Promise<Sharp> {
+    const isLogo = asset.kind === AssetKind.Logo || asset.kind === AssetKind.LogoDark;
+    if (!isLogo && !icon.maskable) {
+      return pipe.resize(icon.width, icon.height);
+    }
+
+    const scale = icon.maskable ? MASKABLE_ICON_SCALE : 1;
+    const resized = await pipe
+      .resize(Math.round(icon.width * scale), Math.round(icon.height * scale))
+      .png()
+      .toBuffer();
+
+    return sharp({
+      create: {
+        width: icon.width,
+        height: icon.height,
+        channels: 4,
+        background: this.options.iconBackgroundColor ?? '#ffffff',
+      },
+    }).composite([{ input: resized, gravity: sharp.gravity.center }]);
   }
 
   private async getPWADirectory(projectRoot?: string): Promise<string> {
@@ -325,16 +356,16 @@ export class PwaAssetGenerator extends AssetGenerator {
       replacedIcons.push(this.makeIconManifestEntry(asset.template, relativePath));
     }
 
-    // Delete icons that were replaced
+    // Delete generated icons that were replaced, e.g. the `icon-<size>.webp` files of earlier versions.
+    // Files outside the icons directory are user-owned and left alone.
+    const iconsDir = join(pwaAssetDir, PWA_ASSET_PATH);
     for (const icon of icons) {
-      if (await pathExists(join(pwaDir, icon.src))) {
-        const exists = !!pwaAssets.find(({ template: { width, height } }) => {
-          return `${width}x${height}` === icon.sizes;
-        });
-        if (!exists) {
-          rmSync(join(pwaDir, icon.src));
-          warn(`DELETE ${icon.src}`);
-        }
+      const iconPath = join(pwaDir, icon.src);
+      const isGenerated = !relative(iconsDir, iconPath).startsWith('..');
+      const isReplaced = replacedIcons.some(({ src }) => join(pwaDir, src) === iconPath);
+      if (isGenerated && !isReplaced && (await pathExists(iconPath))) {
+        rmSync(iconPath);
+        warn(`DELETE ${icon.src}`);
       }
     }
 
@@ -377,7 +408,7 @@ export class PwaAssetGenerator extends AssetGenerator {
     };
 
     if (asset.kind === AssetKind.Icon) {
-      entry.purpose = 'any maskable';
+      entry.purpose = asset.maskable ? 'maskable' : 'any';
     }
 
     return entry;
@@ -451,11 +482,14 @@ Add the following tags to your index.html to support PWA icons:
 `);
     const pwaAssets = generated.filter((g) => g.template.platform === Platform.Pwa);
 
-    const mainIcon = pwaAssets.find((g) => g.template.width == 512 && g.template.kind === AssetKind.Icon);
+    const appleTouchIcons = pwaAssets.filter(
+      (g) => g.template.kind === AssetKind.Icon && !(g.template as PwaOutputAssetTemplate).maskable,
+    );
+    const mainIcon = appleTouchIcons.find((g) => g.template.width == 512);
 
     log(`<link rel="apple-touch-icon" href="${Object.values(mainIcon?.destFilenames ?? {})[0]}">`);
 
-    for (const g of pwaAssets.filter((a) => a.template.kind === AssetKind.Icon)) {
+    for (const g of appleTouchIcons) {
       const w = g.template.width;
       const h = g.template.height;
       const path = Object.values(g.destFilenames)[0] ?? '';

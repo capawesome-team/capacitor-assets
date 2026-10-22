@@ -19,6 +19,7 @@ export interface Assets {
   androidIcon?: InputAsset | null;
   androidIconForeground?: InputAsset | null;
   androidIconBackground?: InputAsset | null;
+  androidIconMonochrome?: InputAsset | null;
 
   androidSplash?: InputAsset | null;
   androidSplashDark?: InputAsset | null;
@@ -153,6 +154,7 @@ export interface PwaOutputAssetTemplate extends OutputAssetTemplate {
   name: string;
   orientation?: Orientation;
   density?: string;
+  maskable?: boolean;
 }
 
 export interface AndroidOutputAssetTemplate extends OutputAssetTemplate {

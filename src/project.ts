@@ -67,8 +67,21 @@ export class Project extends MobileProject {
       iosSplashDark: await this.loadInputAsset('ios/splash-dark', AssetKind.SplashDark, Platform.Ios),
 
       androidIcon: await this.loadInputAsset('android/icon', AssetKind.Icon, Platform.Android),
-      androidIconForeground: await this.loadInputAsset('android/icon-foreground', AssetKind.Icon, Platform.Android),
-      androidIconBackground: await this.loadInputAsset('android/icon-background', AssetKind.Icon, Platform.Android),
+      androidIconForeground: await this.loadInputAsset(
+        'android/icon-foreground',
+        AssetKind.IconForeground,
+        Platform.Android,
+      ),
+      androidIconBackground: await this.loadInputAsset(
+        'android/icon-background',
+        AssetKind.IconBackground,
+        Platform.Android,
+      ),
+      androidIconMonochrome: await this.loadInputAsset(
+        'android/icon-monochrome',
+        AssetKind.IconMonochrome,
+        Platform.Android,
+      ),
 
       androidSplash: await this.loadInputAsset('android/splash', AssetKind.Splash, Platform.Android),
       androidSplashDark: await this.loadInputAsset('android/splash-dark', AssetKind.SplashDark, Platform.Android),
